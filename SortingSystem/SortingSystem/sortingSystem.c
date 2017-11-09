@@ -42,7 +42,7 @@
 // ADC variables
 volatile uint16_t ADC_result;
 volatile unsigned int ADC_result_flag;
-volative unsigned int reflective_present;
+volatile unsigned int reflective_present;
 
 // Stepper variables
 volatile int motor_position;
@@ -82,7 +82,7 @@ ISR(INT3_vect){
 //Optical Sensor for ADC, edge triggered
 ISR(INT2_vect){
 	if(reflective_present) reflective_present == 0;
-	else refelctive_present = 1;
+	else reflective_present = 1;
 	ADC_run();
 }
 

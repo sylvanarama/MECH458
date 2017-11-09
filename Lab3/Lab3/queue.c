@@ -1,8 +1,8 @@
 /*
 ########################################################################
-# MILESTONE : 2
-# PROGRAM : 2
-# PROJECT : Lab 2
+# MILESTONE : 3
+# PROGRAM : queue.c
+# PROJECT : Lab 3
 # GROUP : 2
 # NAME 1 : Madeleine Townley, V00752611
 # NAME 2 : Alex Koszegi, V00811645
@@ -16,14 +16,7 @@
 #include "LinkedQueue.h"		// header for the linked queue function library
 
 #define WAIT 0x04			// PORTx = 0bXXXXX1XX, means wait to read data from the port 
-/*
-typedef struct queue{
-	link* h = NULL;
-	link* t = NULL;
-	link* newLink = NULL;
-	link* rtnLink = NULL;
-}queue;
-*/
+
 void mTimer(int count)
 {
 	int i=0;
@@ -49,7 +42,7 @@ void mTimer(int count)
 /*################## MAIN ROUTINE ##################*/
 
 int main(int argc, char *argv[]){
-	
+	/*
 	// Set timer 1 to run at CPU clock, disable all function and use as pure timer 
 	TCCR1B |=  _BV(CS10);	// _BV sets the bit to logic 1, CS10 selects clock with no prescaling, f=1 MHz
 	
@@ -57,7 +50,7 @@ int main(int argc, char *argv[]){
 	DDRC = 0xff;			//Set all pins on Port C to output 
 	PORTC = 0x00;			//Set all pins on Port C to LOW
 	DDRA = 0x00;			//Set all pins on Port A to input
-	PORTA = 0x00;			//Enable pull-up resistors to set unconnected pins to LOW
+	PORTA = 0x00;			//Disable pull-up resistors to set unconnected pins to LOW
 
 	
 	// Set up a linked list to hold the data read from Port A 
@@ -140,7 +133,7 @@ int main(int argc, char *argv[]){
 		mTimer(2000);
 
 }
-	
+	*/
 	return (0); //This line returns a 0 value to the calling program
 	// generally means no error was returned
 }
