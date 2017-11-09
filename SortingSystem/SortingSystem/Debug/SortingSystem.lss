@@ -3,31 +3,31 @@ SortingSystem.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00800100  0000027e  2**0
+  0 .data         00000000  00800100  00800100  00000484  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         0000020a  00000000  00000000  00000074  2**1
+  1 .text         00000410  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          0000000a  00800100  00800100  0000027e  2**0
+  2 .bss          0000000e  00800100  00800100  00000484  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  0000027e  2**0
+  3 .comment      00000030  00000000  00000000  00000484  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  000002b0  2**2
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  000004b4  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 000000b0  00000000  00000000  000002f0  2**0
+  5 .debug_aranges 000000d0  00000000  00000000  000004f4  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   0000102b  00000000  00000000  000003a0  2**0
+  6 .debug_info   000013ff  00000000  00000000  000005c4  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000c91  00000000  00000000  000013cb  2**0
+  7 .debug_abbrev 00000d0d  00000000  00000000  000019c3  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   000006b5  00000000  00000000  0000205c  2**0
+  8 .debug_line   000008fa  00000000  00000000  000026d0  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  00000200  00000000  00000000  00002714  2**2
+  9 .debug_frame  000002cc  00000000  00000000  00002fcc  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000006a2  00000000  00000000  00002914  2**0
+ 10 .debug_str    00000790  00000000  00000000  00003298  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000444  00000000  00000000  00002fb6  2**0
+ 11 .debug_loc    000008c9  00000000  00000000  00003a28  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 000000a0  00000000  00000000  000033fa  2**0
+ 12 .debug_ranges 000000c0  00000000  00000000  000042f1  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -35,13 +35,13 @@ Disassembly of section .text:
 00000000 <__vectors>:
    0:	4b c0       	rjmp	.+150    	; 0x98 <__ctors_end>
    2:	00 00       	nop
-   4:	89 c0       	rjmp	.+274    	; 0x118 <__vector_1>
+   4:	da c0       	rjmp	.+436    	; 0x1ba <__vector_1>
    6:	00 00       	nop
    8:	64 c0       	rjmp	.+200    	; 0xd2 <__bad_interrupt>
    a:	00 00       	nop
-   c:	62 c0       	rjmp	.+196    	; 0xd2 <__bad_interrupt>
+   c:	6d c0       	rjmp	.+218    	; 0xe8 <__vector_3>
    e:	00 00       	nop
-  10:	92 c0       	rjmp	.+292    	; 0x136 <__vector_4>
+  10:	e3 c0       	rjmp	.+454    	; 0x1d8 <__vector_4>
   12:	00 00       	nop
   14:	5e c0       	rjmp	.+188    	; 0xd2 <__bad_interrupt>
   16:	00 00       	nop
@@ -91,7 +91,7 @@ Disassembly of section .text:
   6e:	00 00       	nop
   70:	30 c0       	rjmp	.+96     	; 0xd2 <__bad_interrupt>
   72:	00 00       	nop
-  74:	39 c0       	rjmp	.+114    	; 0xe8 <__vector_29>
+  74:	5f c0       	rjmp	.+190    	; 0x134 <__vector_29>
   76:	00 00       	nop
   78:	2c c0       	rjmp	.+88     	; 0xd2 <__bad_interrupt>
   7a:	00 00       	nop
@@ -122,8 +122,8 @@ Disassembly of section .text:
   a4:	11 e0       	ldi	r17, 0x01	; 1
   a6:	a0 e0       	ldi	r26, 0x00	; 0
   a8:	b1 e0       	ldi	r27, 0x01	; 1
-  aa:	ea e0       	ldi	r30, 0x0A	; 10
-  ac:	f2 e0       	ldi	r31, 0x02	; 2
+  aa:	e0 e1       	ldi	r30, 0x10	; 16
+  ac:	f4 e0       	ldi	r31, 0x04	; 4
   ae:	00 e0       	ldi	r16, 0x00	; 0
   b0:	0b bf       	out	0x3b, r16	; 59
   b2:	02 c0       	rjmp	.+4      	; 0xb8 <__do_copy_data+0x14>
@@ -143,22 +143,22 @@ Disassembly of section .text:
   c6:	1d 92       	st	X+, r1
 
 000000c8 <.do_clear_bss_start>:
-  c8:	aa 30       	cpi	r26, 0x0A	; 10
+  c8:	ae 30       	cpi	r26, 0x0E	; 14
   ca:	b2 07       	cpc	r27, r18
   cc:	e1 f7       	brne	.-8      	; 0xc6 <.do_clear_bss_loop>
-  ce:	8c d0       	rcall	.+280    	; 0x1e8 <main>
-  d0:	9a c0       	rjmp	.+308    	; 0x206 <_exit>
+  ce:	7d d1       	rcall	.+762    	; 0x3ca <main>
+  d0:	9d c1       	rjmp	.+826    	; 0x40c <_exit>
 
 000000d2 <__bad_interrupt>:
-  d2:	40 c0       	rjmp	.+128    	; 0x154 <__vector_default>
+  d2:	91 c0       	rjmp	.+290    	; 0x1f6 <__vector_default>
 
 000000d4 <__vector_21>:
-	else if((diff == 2) || (diff == -2)) stepperRotate(TURN_180, CLOCKWISE);
-
-	motor_position = new_position;
-	
-	mTimer(1500);
-}//stepper_position
+	if((v[1][0] < r)  && (r < v[1][1]) && (m == 0)) q->head->e.type = 2; // black
+	if((v[2][0] < r)  && (r < v[2][1]) && (m == 1)) q->head->e.type = 3; // aluminum
+	if((v[3][0] < r)  && (r < v[3][1]) && (m == 1)) q->head->e.type = 4; // steel
+	else q->head->e.type = 0; //unknown type
+	q->head->e.stage = 3;
+}//classify_part
   d4:	1f 92       	push	r1
   d6:	0f 92       	push	r0
   d8:	0f b6       	in	r0, 0x3f	; 63
@@ -170,182 +170,498 @@ Disassembly of section .text:
   e4:	1f 90       	pop	r1
   e6:	18 95       	reti
 
-000000e8 <__vector_29>:
+000000e8 <__vector_3>:
   e8:	1f 92       	push	r1
   ea:	0f 92       	push	r0
   ec:	0f b6       	in	r0, 0x3f	; 63
   ee:	0f 92       	push	r0
   f0:	11 24       	eor	r1, r1
-  f2:	8f 93       	push	r24
-  f4:	9f 93       	push	r25
-  f6:	80 91 79 00 	lds	r24, 0x0079	; 0x800079 <__TEXT_REGION_LENGTH__+0x7e0079>
-  fa:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_end>
-  fe:	81 e0       	ldi	r24, 0x01	; 1
- 100:	90 e0       	ldi	r25, 0x00	; 0
- 102:	90 93 04 01 	sts	0x0104, r25	; 0x800104 <ADC_result_flag+0x1>
- 106:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <ADC_result_flag>
- 10a:	9f 91       	pop	r25
- 10c:	8f 91       	pop	r24
- 10e:	0f 90       	pop	r0
- 110:	0f be       	out	0x3f, r0	; 63
- 112:	0f 90       	pop	r0
- 114:	1f 90       	pop	r1
- 116:	18 95       	reti
+  f2:	0b b6       	in	r0, 0x3b	; 59
+  f4:	0f 92       	push	r0
+  f6:	8f 93       	push	r24
+  f8:	ef 93       	push	r30
+  fa:	ff 93       	push	r31
+  fc:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <reflective_present>
+ 100:	88 23       	and	r24, r24
+ 102:	31 f0       	breq	.+12     	; 0x110 <__vector_3+0x28>
+ 104:	10 92 05 01 	sts	0x0105, r1	; 0x800105 <reflective_present>
+ 108:	81 e0       	ldi	r24, 0x01	; 1
+ 10a:	80 93 06 01 	sts	0x0106, r24	; 0x800106 <item_ready>
+ 10e:	08 c0       	rjmp	.+16     	; 0x120 <__vector_3+0x38>
+ 110:	81 e0       	ldi	r24, 0x01	; 1
+ 112:	80 93 05 01 	sts	0x0105, r24	; 0x800105 <reflective_present>
+ 116:	ea e7       	ldi	r30, 0x7A	; 122
+ 118:	f0 e0       	ldi	r31, 0x00	; 0
+ 11a:	80 81       	ld	r24, Z
+ 11c:	80 64       	ori	r24, 0x40	; 64
+ 11e:	80 83       	st	Z, r24
+ 120:	ff 91       	pop	r31
+ 122:	ef 91       	pop	r30
+ 124:	8f 91       	pop	r24
+ 126:	0f 90       	pop	r0
+ 128:	0b be       	out	0x3b, r0	; 59
+ 12a:	0f 90       	pop	r0
+ 12c:	0f be       	out	0x3f, r0	; 63
+ 12e:	0f 90       	pop	r0
+ 130:	1f 90       	pop	r1
+ 132:	18 95       	reti
 
-00000118 <__vector_1>:
- 118:	1f 92       	push	r1
- 11a:	0f 92       	push	r0
- 11c:	0f b6       	in	r0, 0x3f	; 63
- 11e:	0f 92       	push	r0
- 120:	11 24       	eor	r1, r1
- 122:	8f 93       	push	r24
- 124:	82 e0       	ldi	r24, 0x02	; 2
- 126:	80 93 05 01 	sts	0x0105, r24	; 0x800105 <STATE>
- 12a:	8f 91       	pop	r24
- 12c:	0f 90       	pop	r0
- 12e:	0f be       	out	0x3f, r0	; 63
- 130:	0f 90       	pop	r0
- 132:	1f 90       	pop	r1
- 134:	18 95       	reti
-
-00000136 <__vector_4>:
- 136:	1f 92       	push	r1
- 138:	0f 92       	push	r0
- 13a:	0f b6       	in	r0, 0x3f	; 63
- 13c:	0f 92       	push	r0
- 13e:	11 24       	eor	r1, r1
- 140:	8f 93       	push	r24
- 142:	84 e0       	ldi	r24, 0x04	; 4
- 144:	80 93 05 01 	sts	0x0105, r24	; 0x800105 <STATE>
- 148:	8f 91       	pop	r24
- 14a:	0f 90       	pop	r0
- 14c:	0f be       	out	0x3f, r0	; 63
- 14e:	0f 90       	pop	r0
- 150:	1f 90       	pop	r1
- 152:	18 95       	reti
-
-00000154 <__vector_default>:
- 154:	1f 92       	push	r1
- 156:	0f 92       	push	r0
- 158:	0f b6       	in	r0, 0x3f	; 63
- 15a:	0f 92       	push	r0
- 15c:	11 24       	eor	r1, r1
- 15e:	0f 90       	pop	r0
- 160:	0f be       	out	0x3f, r0	; 63
- 162:	0f 90       	pop	r0
- 164:	1f 90       	pop	r1
- 166:	18 95       	reti
-
-00000168 <init_ADC>:
- 168:	f8 94       	cli
- 16a:	ea 9a       	sbi	0x1d, 2	; 29
- 16c:	e9 e6       	ldi	r30, 0x69	; 105
- 16e:	f0 e0       	ldi	r31, 0x00	; 0
- 170:	80 81       	ld	r24, Z
- 172:	80 63       	ori	r24, 0x30	; 48
- 174:	80 83       	st	Z, r24
- 176:	ea e7       	ldi	r30, 0x7A	; 122
- 178:	f0 e0       	ldi	r31, 0x00	; 0
- 17a:	80 81       	ld	r24, Z
- 17c:	80 68       	ori	r24, 0x80	; 128
- 17e:	80 83       	st	Z, r24
- 180:	80 81       	ld	r24, Z
- 182:	88 60       	ori	r24, 0x08	; 8
- 184:	80 83       	st	Z, r24
- 186:	ec e7       	ldi	r30, 0x7C	; 124
- 188:	f0 e0       	ldi	r31, 0x00	; 0
- 18a:	80 81       	ld	r24, Z
- 18c:	80 66       	ori	r24, 0x60	; 96
- 18e:	80 83       	st	Z, r24
- 190:	18 b8       	out	0x08, r1	; 8
- 192:	78 94       	sei
- 194:	08 95       	ret
-
-00000196 <ADC_run>:
+00000134 <__vector_29>:
+ 134:	1f 92       	push	r1
+ 136:	0f 92       	push	r0
+ 138:	0f b6       	in	r0, 0x3f	; 63
+ 13a:	0f 92       	push	r0
+ 13c:	11 24       	eor	r1, r1
+ 13e:	0b b6       	in	r0, 0x3b	; 59
+ 140:	0f 92       	push	r0
+ 142:	2f 93       	push	r18
+ 144:	3f 93       	push	r19
+ 146:	8f 93       	push	r24
+ 148:	9f 93       	push	r25
+ 14a:	ef 93       	push	r30
+ 14c:	ff 93       	push	r31
+ 14e:	80 91 79 00 	lds	r24, 0x0079	; 0x800079 <__TEXT_REGION_LENGTH__+0x7e0079>
+ 152:	20 91 78 00 	lds	r18, 0x0078	; 0x800078 <__TEXT_REGION_LENGTH__+0x7e0078>
+ 156:	90 e0       	ldi	r25, 0x00	; 0
+ 158:	98 2f       	mov	r25, r24
+ 15a:	88 27       	eor	r24, r24
+ 15c:	82 0f       	add	r24, r18
+ 15e:	91 1d       	adc	r25, r1
+ 160:	90 93 01 01 	sts	0x0101, r25	; 0x800101 <__data_end+0x1>
+ 164:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_end>
+ 168:	20 91 00 01 	lds	r18, 0x0100	; 0x800100 <__data_end>
+ 16c:	30 91 01 01 	lds	r19, 0x0101	; 0x800101 <__data_end+0x1>
+ 170:	80 91 09 01 	lds	r24, 0x0109	; 0x800109 <ADC_lowest_val>
+ 174:	90 91 0a 01 	lds	r25, 0x010A	; 0x80010a <ADC_lowest_val+0x1>
+ 178:	28 17       	cp	r18, r24
+ 17a:	39 07       	cpc	r19, r25
+ 17c:	40 f4       	brcc	.+16     	; 0x18e <__vector_29+0x5a>
+ 17e:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
+ 182:	90 91 01 01 	lds	r25, 0x0101	; 0x800101 <__data_end+0x1>
+ 186:	90 93 0a 01 	sts	0x010A, r25	; 0x80010a <ADC_lowest_val+0x1>
+ 18a:	80 93 09 01 	sts	0x0109, r24	; 0x800109 <ADC_lowest_val>
+ 18e:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <reflective_present>
+ 192:	88 23       	and	r24, r24
+ 194:	29 f0       	breq	.+10     	; 0x1a0 <__vector_29+0x6c>
  196:	ea e7       	ldi	r30, 0x7A	; 122
  198:	f0 e0       	ldi	r31, 0x00	; 0
  19a:	80 81       	ld	r24, Z
  19c:	80 64       	ori	r24, 0x40	; 64
  19e:	80 83       	st	Z, r24
- 1a0:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <ADC_result_flag>
- 1a4:	90 91 04 01 	lds	r25, 0x0104	; 0x800104 <ADC_result_flag+0x1>
- 1a8:	89 2b       	or	r24, r25
- 1aa:	39 f0       	breq	.+14     	; 0x1ba <ADC_run+0x24>
- 1ac:	10 92 04 01 	sts	0x0104, r1	; 0x800104 <ADC_result_flag+0x1>
- 1b0:	10 92 03 01 	sts	0x0103, r1	; 0x800103 <ADC_result_flag>
- 1b4:	80 81       	ld	r24, Z
- 1b6:	80 64       	ori	r24, 0x40	; 64
- 1b8:	80 83       	st	Z, r24
- 1ba:	08 95       	ret
+ 1a0:	ff 91       	pop	r31
+ 1a2:	ef 91       	pop	r30
+ 1a4:	9f 91       	pop	r25
+ 1a6:	8f 91       	pop	r24
+ 1a8:	3f 91       	pop	r19
+ 1aa:	2f 91       	pop	r18
+ 1ac:	0f 90       	pop	r0
+ 1ae:	0b be       	out	0x3b, r0	; 59
+ 1b0:	0f 90       	pop	r0
+ 1b2:	0f be       	out	0x3f, r0	; 63
+ 1b4:	0f 90       	pop	r0
+ 1b6:	1f 90       	pop	r1
+ 1b8:	18 95       	reti
 
-000001bc <testCode>:
+000001ba <__vector_1>:
+ 1ba:	1f 92       	push	r1
+ 1bc:	0f 92       	push	r0
+ 1be:	0f b6       	in	r0, 0x3f	; 63
+ 1c0:	0f 92       	push	r0
+ 1c2:	11 24       	eor	r1, r1
+ 1c4:	8f 93       	push	r24
+ 1c6:	82 e0       	ldi	r24, 0x02	; 2
+ 1c8:	80 93 04 01 	sts	0x0104, r24	; 0x800104 <STATE>
+ 1cc:	8f 91       	pop	r24
+ 1ce:	0f 90       	pop	r0
+ 1d0:	0f be       	out	0x3f, r0	; 63
+ 1d2:	0f 90       	pop	r0
+ 1d4:	1f 90       	pop	r1
+ 1d6:	18 95       	reti
 
-void testCode(char* temp_result){
- 1bc:	cf 93       	push	r28
- 1be:	df 93       	push	r29
-	ADC_run();
- 1c0:	ec 01       	movw	r28, r24
-	if((ADC_result < *temp_result) && (ADC_result != 0x00)) *temp_result = ADC_result;
- 1c2:	e9 df       	rcall	.-46     	; 0x196 <ADC_run>
- 1c4:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
- 1c8:	98 81       	ld	r25, Y
- 1ca:	89 17       	cp	r24, r25
- 1cc:	38 f4       	brcc	.+14     	; 0x1dc <testCode+0x20>
- 1ce:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
- 1d2:	88 23       	and	r24, r24
- 1d4:	19 f0       	breq	.+6      	; 0x1dc <testCode+0x20>
- 1d6:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
-	PORTC = ADC_result;
- 1da:	88 83       	st	Y, r24
- 1dc:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
-}
- 1e0:	88 b9       	out	0x08, r24	; 8
- 1e2:	df 91       	pop	r29
- 1e4:	cf 91       	pop	r28
- 1e6:	08 95       	ret
+000001d8 <__vector_4>:
+ 1d8:	1f 92       	push	r1
+ 1da:	0f 92       	push	r0
+ 1dc:	0f b6       	in	r0, 0x3f	; 63
+ 1de:	0f 92       	push	r0
+ 1e0:	11 24       	eor	r1, r1
+ 1e2:	8f 93       	push	r24
+ 1e4:	84 e0       	ldi	r24, 0x04	; 4
+ 1e6:	80 93 04 01 	sts	0x0104, r24	; 0x800104 <STATE>
+ 1ea:	8f 91       	pop	r24
+ 1ec:	0f 90       	pop	r0
+ 1ee:	0f be       	out	0x3f, r0	; 63
+ 1f0:	0f 90       	pop	r0
+ 1f2:	1f 90       	pop	r1
+ 1f4:	18 95       	reti
 
-000001e8 <main>:
+000001f6 <__vector_default>:
+ 1f6:	1f 92       	push	r1
+ 1f8:	0f 92       	push	r0
+ 1fa:	0f b6       	in	r0, 0x3f	; 63
+ 1fc:	0f 92       	push	r0
+ 1fe:	11 24       	eor	r1, r1
+ 200:	0f 90       	pop	r0
+ 202:	0f be       	out	0x3f, r0	; 63
+ 204:	0f 90       	pop	r0
+ 206:	1f 90       	pop	r1
+ 208:	18 95       	reti
+
+0000020a <init_motor>:
+ 20a:	84 e0       	ldi	r24, 0x04	; 4
+ 20c:	8b b9       	out	0x0b, r24	; 11
+ 20e:	80 e7       	ldi	r24, 0x70	; 112
+ 210:	87 bd       	out	0x27, r24	; 39
+ 212:	08 95       	ret
+
+00000214 <init_ADC>:
+ 214:	f8 94       	cli
+ 216:	8f e3       	ldi	r24, 0x3F	; 63
+ 218:	90 e0       	ldi	r25, 0x00	; 0
+ 21a:	90 93 01 01 	sts	0x0101, r25	; 0x800101 <__data_end+0x1>
+ 21e:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_end>
+ 222:	90 93 0a 01 	sts	0x010A, r25	; 0x80010a <ADC_lowest_val+0x1>
+ 226:	80 93 09 01 	sts	0x0109, r24	; 0x800109 <ADC_lowest_val>
+ 22a:	10 92 05 01 	sts	0x0105, r1	; 0x800105 <reflective_present>
+ 22e:	ea 9a       	sbi	0x1d, 2	; 29
+ 230:	e9 e6       	ldi	r30, 0x69	; 105
+ 232:	f0 e0       	ldi	r31, 0x00	; 0
+ 234:	80 81       	ld	r24, Z
+ 236:	8f 6c       	ori	r24, 0xCF	; 207
+ 238:	80 83       	st	Z, r24
+ 23a:	ea e7       	ldi	r30, 0x7A	; 122
+ 23c:	f0 e0       	ldi	r31, 0x00	; 0
+ 23e:	80 81       	ld	r24, Z
+ 240:	80 68       	ori	r24, 0x80	; 128
+ 242:	80 83       	st	Z, r24
+ 244:	80 81       	ld	r24, Z
+ 246:	88 60       	ori	r24, 0x08	; 8
+ 248:	80 83       	st	Z, r24
+ 24a:	ec e7       	ldi	r30, 0x7C	; 124
+ 24c:	f0 e0       	ldi	r31, 0x00	; 0
+ 24e:	80 81       	ld	r24, Z
+ 250:	80 66       	ori	r24, 0x60	; 96
+ 252:	80 83       	st	Z, r24
+ 254:	78 94       	sei
+ 256:	08 95       	ret
+
+00000258 <mTimer>:
+ 258:	ac 01       	movw	r20, r24
+ 25a:	e1 e8       	ldi	r30, 0x81	; 129
+ 25c:	f0 e0       	ldi	r31, 0x00	; 0
+ 25e:	90 81       	ld	r25, Z
+ 260:	98 60       	ori	r25, 0x08	; 8
+ 262:	90 83       	st	Z, r25
+ 264:	88 ee       	ldi	r24, 0xE8	; 232
+ 266:	93 e0       	ldi	r25, 0x03	; 3
+ 268:	90 93 89 00 	sts	0x0089, r25	; 0x800089 <__TEXT_REGION_LENGTH__+0x7e0089>
+ 26c:	80 93 88 00 	sts	0x0088, r24	; 0x800088 <__TEXT_REGION_LENGTH__+0x7e0088>
+ 270:	10 92 85 00 	sts	0x0085, r1	; 0x800085 <__TEXT_REGION_LENGTH__+0x7e0085>
+ 274:	10 92 84 00 	sts	0x0084, r1	; 0x800084 <__TEXT_REGION_LENGTH__+0x7e0084>
+ 278:	ef e6       	ldi	r30, 0x6F	; 111
+ 27a:	f0 e0       	ldi	r31, 0x00	; 0
+ 27c:	90 81       	ld	r25, Z
+ 27e:	92 60       	ori	r25, 0x02	; 2
+ 280:	90 83       	st	Z, r25
+ 282:	b1 9a       	sbi	0x16, 1	; 22
+ 284:	20 e0       	ldi	r18, 0x00	; 0
+ 286:	30 e0       	ldi	r19, 0x00	; 0
+ 288:	05 c0       	rjmp	.+10     	; 0x294 <mTimer+0x3c>
+ 28a:	b1 9b       	sbis	0x16, 1	; 22
+ 28c:	fe cf       	rjmp	.-4      	; 0x28a <mTimer+0x32>
+ 28e:	b1 9a       	sbi	0x16, 1	; 22
+ 290:	2f 5f       	subi	r18, 0xFF	; 255
+ 292:	3f 4f       	sbci	r19, 0xFF	; 255
+ 294:	24 17       	cp	r18, r20
+ 296:	35 07       	cpc	r19, r21
+ 298:	1c f4       	brge	.+6      	; 0x2a0 <mTimer+0x48>
+ 29a:	b1 9b       	sbis	0x16, 1	; 22
+ 29c:	f6 cf       	rjmp	.-20     	; 0x28a <mTimer+0x32>
+ 29e:	f7 cf       	rjmp	.-18     	; 0x28e <mTimer+0x36>
+ 2a0:	08 95       	ret
+
+000002a2 <ADC_calibrate>:
+
+//Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
+void ADC_calibrate(uint16_t cal_vals_final[4][4]){
+ 2a2:	af 92       	push	r10
+ 2a4:	bf 92       	push	r11
+ 2a6:	df 92       	push	r13
+ 2a8:	ef 92       	push	r14
+ 2aa:	ff 92       	push	r15
+ 2ac:	0f 93       	push	r16
+ 2ae:	1f 93       	push	r17
+ 2b0:	cf 93       	push	r28
+ 2b2:	df 93       	push	r29
+ 2b4:	cd b7       	in	r28, 0x3d	; 61
+ 2b6:	de b7       	in	r29, 0x3e	; 62
+ 2b8:	64 97       	sbiw	r28, 0x14	; 20
+ 2ba:	0f b6       	in	r0, 0x3f	; 63
+ 2bc:	f8 94       	cli
+ 2be:	de bf       	out	0x3e, r29	; 62
+ 2c0:	0f be       	out	0x3f, r0	; 63
+ 2c2:	cd bf       	out	0x3d, r28	; 61
+ 2c4:	08 2f       	mov	r16, r24
+	init_ADC();
+	init_motor();
+ 2c6:	19 2f       	mov	r17, r25
+ 2c8:	a5 df       	rcall	.-182    	; 0x214 <init_ADC>
+ 2ca:	9f df       	rcall	.-194    	; 0x20a <init_motor>
+ 2cc:	e0 2e       	mov	r14, r16
+ 2ce:	f1 2e       	mov	r15, r17
+ 2d0:	d1 2c       	mov	r13, r1
+ 2d2:	8e 01       	movw	r16, r28
+ 2d4:	0b 5e       	subi	r16, 0xEB	; 235
+ 2d6:	1f 4f       	sbci	r17, 0xFF	; 255
+	for(j=0;j<4;j++)
+	{
+		// run part through 10 times, store the lowest value of each pass in an array
+		for(i=0;i<10;i++)
+		{
+			while(!item_ready) {}
+ 2d8:	65 c0       	rjmp	.+202    	; 0x3a4 <ADC_calibrate+0x102>
+ 2da:	80 91 06 01 	lds	r24, 0x0106	; 0x800106 <item_ready>
+ 2de:	88 23       	and	r24, r24
+			PORTC = ADC_lowest_val & 0xFF00;
+ 2e0:	e1 f3       	breq	.-8      	; 0x2da <ADC_calibrate+0x38>
+ 2e2:	80 91 09 01 	lds	r24, 0x0109	; 0x800109 <ADC_lowest_val>
+ 2e6:	90 91 0a 01 	lds	r25, 0x010A	; 0x80010a <ADC_lowest_val+0x1>
+			cal_vals[i] = ADC_lowest_val;					
+ 2ea:	18 b8       	out	0x08, r1	; 8
+ 2ec:	80 91 09 01 	lds	r24, 0x0109	; 0x800109 <ADC_lowest_val>
+ 2f0:	90 91 0a 01 	lds	r25, 0x010A	; 0x80010a <ADC_lowest_val+0x1>
+ 2f4:	81 93       	st	Z+, r24
+	uint16_t min, max, med, avg;
+	
+	for(j=0;j<4;j++)
+	{
+		// run part through 10 times, store the lowest value of each pass in an array
+		for(i=0;i<10;i++)
+ 2f6:	91 93       	st	Z+, r25
+ 2f8:	0e 17       	cp	r16, r30
+ 2fa:	1f 07       	cpc	r17, r31
+			while(!item_ready) {}
+			PORTC = ADC_lowest_val & 0xFF00;
+			cal_vals[i] = ADC_lowest_val;					
+		}
+		// calculate the minimum, maximum, median, and mean of the 10 values
+		min = cal_vals[0];
+ 2fc:	71 f7       	brne	.-36     	; 0x2da <ADC_calibrate+0x38>
+ 2fe:	a9 80       	ldd	r10, Y+1	; 0x01
+		max = cal_vals[0];
+		avg = cal_vals[0];
+		for(k=1;k<10;k++)
+		{
+			if(cal_vals[i] > max) max = cal_vals[i];
+ 300:	ba 80       	ldd	r11, Y+2	; 0x02
+ 302:	ed 89       	ldd	r30, Y+21	; 0x15
+			PORTC = ADC_lowest_val & 0xFF00;
+			cal_vals[i] = ADC_lowest_val;					
+		}
+		// calculate the minimum, maximum, median, and mean of the 10 values
+		min = cal_vals[0];
+		max = cal_vals[0];
+ 304:	fe 89       	ldd	r31, Y+22	; 0x16
+			while(!item_ready) {}
+			PORTC = ADC_lowest_val & 0xFF00;
+			cal_vals[i] = ADC_lowest_val;					
+		}
+		// calculate the minimum, maximum, median, and mean of the 10 values
+		min = cal_vals[0];
+ 306:	b5 01       	movw	r22, r10
+		max = cal_vals[0];
+		avg = cal_vals[0];
+		for(k=1;k<10;k++)
+		{
+			if(cal_vals[i] > max) max = cal_vals[i];
+ 308:	c5 01       	movw	r24, r10
+ 30a:	49 e0       	ldi	r20, 0x09	; 9
+ 30c:	50 e0       	ldi	r21, 0x00	; 0
+ 30e:	ae 2f       	mov	r26, r30
+ 310:	3f 2f       	mov	r19, r31
+ 312:	6e 17       	cp	r22, r30
+ 314:	7f 07       	cpc	r23, r31
+ 316:	10 f4       	brcc	.+4      	; 0x31c <ADC_calibrate+0x7a>
+ 318:	6a 2f       	mov	r22, r26
+ 31a:	73 2f       	mov	r23, r19
+ 31c:	e8 17       	cp	r30, r24
+ 31e:	f9 07       	cpc	r31, r25
+ 320:	10 f4       	brcc	.+4      	; 0x326 <ADC_calibrate+0x84>
+ 322:	8a 2f       	mov	r24, r26
+ 324:	93 2f       	mov	r25, r19
+ 326:	41 50       	subi	r20, 0x01	; 1
+		}
+		// calculate the minimum, maximum, median, and mean of the 10 values
+		min = cal_vals[0];
+		max = cal_vals[0];
+		avg = cal_vals[0];
+		for(k=1;k<10;k++)
+ 328:	51 09       	sbc	r21, r1
+ 32a:	99 f7       	brne	.-26     	; 0x312 <ADC_calibrate+0x70>
+ 32c:	ae 0e       	add	r10, r30
+ 32e:	bf 1e       	adc	r11, r31
+ 330:	ee 0f       	add	r30, r30
+ 332:	ff 1f       	adc	r31, r31
+ 334:	ee 0f       	add	r30, r30
+ 336:	ff 1f       	adc	r31, r31
+ 338:	ee 0f       	add	r30, r30
+ 33a:	ff 1f       	adc	r31, r31
+ 33c:	9f 01       	movw	r18, r30
+ 33e:	2a 0d       	add	r18, r10
+		// white    [0,0][0,1][0,2][0,3]
+		// black    [1,0][1,1][1,2][1,3]
+		// aluminum [2,0][2,1][2,2][2,3]
+		// steel    [3,0][3,1][3,2][3,3]
+		
+		cal_vals_final[j][0] = min;
+ 340:	3b 1d       	adc	r19, r11
+ 342:	f7 01       	movw	r30, r14
+ 344:	91 83       	std	Z+1, r25	; 0x01
+		cal_vals_final[j][1] = max;
+ 346:	80 83       	st	Z, r24
+ 348:	73 83       	std	Z+3, r23	; 0x03
+		cal_vals_final[j][2] = med;
+ 34a:	62 83       	std	Z+2, r22	; 0x02
+ 34c:	86 0f       	add	r24, r22
+ 34e:	97 1f       	adc	r25, r23
+ 350:	96 95       	lsr	r25
+ 352:	87 95       	ror	r24
+		cal_vals_final[j][3] = avg;
+ 354:	95 83       	std	Z+5, r25	; 0x05
+ 356:	84 83       	std	Z+4, r24	; 0x04
+ 358:	ad ec       	ldi	r26, 0xCD	; 205
+ 35a:	bc ec       	ldi	r27, 0xCC	; 204
+ 35c:	48 d0       	rcall	.+144    	; 0x3ee <__umulhisi3>
+ 35e:	96 95       	lsr	r25
+ 360:	87 95       	ror	r24
+ 362:	96 95       	lsr	r25
+ 364:	87 95       	ror	r24
+ 366:	96 95       	lsr	r25
+		
+		// display the results for the part
+		PORTC = j;
+		mTimer(1000);
+ 368:	87 95       	ror	r24
+ 36a:	97 83       	std	Z+7, r25	; 0x07
+ 36c:	86 83       	std	Z+6, r24	; 0x06
+		PORTC = min & 0xFF00;
+ 36e:	d8 b8       	out	0x08, r13	; 8
+		mTimer(1000);
+ 370:	88 ee       	ldi	r24, 0xE8	; 232
+ 372:	93 e0       	ldi	r25, 0x03	; 3
+ 374:	71 df       	rcall	.-286    	; 0x258 <mTimer>
+		PORTC = max & 0xFF00;
+ 376:	18 b8       	out	0x08, r1	; 8
+		mTimer(1000);
+ 378:	88 ee       	ldi	r24, 0xE8	; 232
+ 37a:	93 e0       	ldi	r25, 0x03	; 3
+ 37c:	6d df       	rcall	.-294    	; 0x258 <mTimer>
+		PORTC = med & 0xFF00;
+		mTimer(1000);
+ 37e:	18 b8       	out	0x08, r1	; 8
+ 380:	88 ee       	ldi	r24, 0xE8	; 232
+ 382:	93 e0       	ldi	r25, 0x03	; 3
+		PORTC = avg & 0xFF00;
+ 384:	69 df       	rcall	.-302    	; 0x258 <mTimer>
+		mTimer(1000);
+ 386:	18 b8       	out	0x08, r1	; 8
+ 388:	88 ee       	ldi	r24, 0xE8	; 232
+ 38a:	93 e0       	ldi	r25, 0x03	; 3
+ 38c:	65 df       	rcall	.-310    	; 0x258 <mTimer>
+ 38e:	18 b8       	out	0x08, r1	; 8
+ 390:	88 ee       	ldi	r24, 0xE8	; 232
+ 392:	93 e0       	ldi	r25, 0x03	; 3
+ 394:	61 df       	rcall	.-318    	; 0x258 <mTimer>
+	init_motor();
+	int i,j,k;
+	uint16_t cal_vals[10];
+	uint16_t min, max, med, avg;
+	
+	for(j=0;j<4;j++)
+ 396:	f8 e0       	ldi	r31, 0x08	; 8
+ 398:	ef 0e       	add	r14, r31
+ 39a:	f1 1c       	adc	r15, r1
+ 39c:	d3 94       	inc	r13
+ 39e:	84 e0       	ldi	r24, 0x04	; 4
+ 3a0:	d8 16       	cp	r13, r24
+		PORTC = med & 0xFF00;
+		mTimer(1000);
+		PORTC = avg & 0xFF00;
+		mTimer(1000);
+	}	
+}//ADC_calibrate
+ 3a2:	19 f0       	breq	.+6      	; 0x3aa <ADC_calibrate+0x108>
+ 3a4:	fe 01       	movw	r30, r28
+ 3a6:	31 96       	adiw	r30, 0x01	; 1
+ 3a8:	98 cf       	rjmp	.-208    	; 0x2da <ADC_calibrate+0x38>
+ 3aa:	64 96       	adiw	r28, 0x14	; 20
+ 3ac:	0f b6       	in	r0, 0x3f	; 63
+ 3ae:	f8 94       	cli
+ 3b0:	de bf       	out	0x3e, r29	; 62
+ 3b2:	0f be       	out	0x3f, r0	; 63
+ 3b4:	cd bf       	out	0x3d, r28	; 61
+ 3b6:	df 91       	pop	r29
+ 3b8:	cf 91       	pop	r28
+ 3ba:	1f 91       	pop	r17
+ 3bc:	0f 91       	pop	r16
+ 3be:	ff 90       	pop	r15
+ 3c0:	ef 90       	pop	r14
+ 3c2:	df 90       	pop	r13
+ 3c4:	bf 90       	pop	r11
+ 3c6:	af 90       	pop	r10
+ 3c8:	08 95       	ret
+
+000003ca <main>:
+
 //##############	Main Program	##############//
 
 int main(void)
 {
- 1e8:	cf 93       	push	r28
- 1ea:	df 93       	push	r29
- 1ec:	1f 92       	push	r1
- 1ee:	cd b7       	in	r28, 0x3d	; 61
- 1f0:	de b7       	in	r29, 0x3e	; 62
+ 3ca:	cf 93       	push	r28
+ 3cc:	df 93       	push	r29
+ 3ce:	cd b7       	in	r28, 0x3d	; 61
+ 3d0:	de b7       	in	r29, 0x3e	; 62
+ 3d2:	a0 97       	sbiw	r28, 0x20	; 32
+ 3d4:	0f b6       	in	r0, 0x3f	; 63
+ 3d6:	f8 94       	cli
+ 3d8:	de bf       	out	0x3e, r29	; 62
+ 3da:	0f be       	out	0x3f, r0	; 63
+ 3dc:	cd bf       	out	0x3d, r28	; 61
 	// Init port directions
 	DDRA = 0x00;		// Port A all inputs (button and switch)
- 1f2:	11 b8       	out	0x01, r1	; 1
+ 3de:	11 b8       	out	0x01, r1	; 1
 	DDRC = 0xFF;		// Port C all output (LEDs)
- 1f4:	1f ef       	ldi	r17, 0xFF	; 255
- 1f6:	17 b9       	out	0x07, r17	; 7
+ 3e0:	8f ef       	ldi	r24, 0xFF	; 255
+ 3e2:	87 b9       	out	0x07, r24	; 7
+	DDRD = 0xFF;		// Port D 3:0 = output (Motor)
+ 3e4:	8a b9       	out	0x0a, r24	; 10
 	
-	// Init peripherals
-	//queue* itemList = initQueue();
-	//init_interrupts();
-	//init_timer0_pwm();
-	init_ADC();	
- 1f8:	1a b9       	out	0x0a, r17	; 10
-	//init_stepper();
-	//init_motor();
-	
-	// Testing variables
-	char temp_result = 0xFF;
- 1fa:	b6 df       	rcall	.-148    	; 0x168 <init_ADC>
-	
-	// Main Program
-	while (1)
-	{
-		testCode(&temp_result);
- 1fc:	19 83       	std	Y+1, r17	; 0x01
- 1fe:	ce 01       	movw	r24, r28
- 200:	01 96       	adiw	r24, 0x01	; 1
- 202:	dc df       	rcall	.-72     	; 0x1bc <testCode>
- 204:	fc cf       	rjmp	.-8      	; 0x1fe <main+0x16>
+	// Calibrate ADC before program starts
+	uint16_t calibration_values[4][4];
+	ADC_calibrate(calibration_values);
+ 3e6:	ce 01       	movw	r24, r28
+ 3e8:	01 96       	adiw	r24, 0x01	; 1
+ 3ea:	5b df       	rcall	.-330    	; 0x2a2 <ADC_calibrate>
+ 3ec:	ff cf       	rjmp	.-2      	; 0x3ec <main+0x22>
 
-00000206 <_exit>:
- 206:	f8 94       	cli
+000003ee <__umulhisi3>:
+ 3ee:	a2 9f       	mul	r26, r18
+ 3f0:	b0 01       	movw	r22, r0
+ 3f2:	b3 9f       	mul	r27, r19
+ 3f4:	c0 01       	movw	r24, r0
+ 3f6:	a3 9f       	mul	r26, r19
+ 3f8:	70 0d       	add	r23, r0
+ 3fa:	81 1d       	adc	r24, r1
+ 3fc:	11 24       	eor	r1, r1
+ 3fe:	91 1d       	adc	r25, r1
+ 400:	b2 9f       	mul	r27, r18
+ 402:	70 0d       	add	r23, r0
+ 404:	81 1d       	adc	r24, r1
+ 406:	11 24       	eor	r1, r1
+ 408:	91 1d       	adc	r25, r1
+ 40a:	08 95       	ret
 
-00000208 <__stop_program>:
- 208:	ff cf       	rjmp	.-2      	; 0x208 <__stop_program>
+0000040c <_exit>:
+ 40c:	f8 94       	cli
+
+0000040e <__stop_program>:
+ 40e:	ff cf       	rjmp	.-2      	; 0x40e <__stop_program>

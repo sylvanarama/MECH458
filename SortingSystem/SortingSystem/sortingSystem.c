@@ -41,8 +41,11 @@
 //##############GLOBAL VARIABLES##############//
 // ADC variables
 volatile uint16_t ADC_result;
-volatile unsigned int ADC_result_flag;
-volatile unsigned int reflective_present;
+volatile uint16_t ADC_lowest_val;
+volatile char reflective_present;
+
+// Sensor variables
+volatile char is_metal;
 
 // Stepper variables
 volatile int motor_position;
@@ -54,6 +57,7 @@ uint8_t motor_direction = 0x04;
 
 // State and Control Variables
 volatile char STATE;
+volatile char item_ready;
 
 //##############	ISRs	##############//
 ISR(TIMER0_COMPA_vect){
@@ -61,11 +65,28 @@ ISR(TIMER0_COMPA_vect){
 	return;
 }
 
+//Optical Sensor for ADC, edge triggered
+ISR(INT2_vect){
+	//object exiting reflective sensor zone, item ready to be classified
+	if(reflective_present) 
+	{
+		reflective_present = 0;
+		item_ready = 1;
+	}
+	// object entering the reflective sensor zone, start ADC conversion
+	else
+	{
+		reflective_present = 1; 
+		ADCSRA |= _BV(ADSC);	
+	}
+}
+
 //Interrupt when ADC finished
 ISR(ADC_vect)
 {
 	ADC_result = ((ADCH << 8) + ADCL);
-	ADC_result_flag = 1;
+	if(ADC_result < ADC_lowest_val) ADC_lowest_val = ADC_result;
+	if(reflective_present) ADCSRA |= _BV(ADSC);
 }
 
 // Set up the External Interrupt 0 Vector 
@@ -79,12 +100,7 @@ ISR(INT3_vect){
 	STATE = 4;
 }
 
-//Optical Sensor for ADC, edge triggered
-ISR(INT2_vect){
-	if(reflective_present) reflective_present == 0;
-	else reflective_present = 1;
-	ADC_run();
-}
+
 
 // If an unexpected interrupt occurs (interrupt is enabled and no handler is installed,
 // which usually indicates a bug), then the default action is to reset the device by jumping
@@ -109,10 +125,10 @@ void init_interrupts(){
 	// Set up the Interrupt 0, 1, 2, 3 options
 	//External Interrupt Control Register A - EICRA (pg 94 and under the EXT_INT tab to the right
 	// Set Interrupt sense control to catch a rising edge or any edge
-	EICRA |= _BV(ISC01) | _BV(ISC00);  //INT0: rising 
-	EICRA |= _BV(ISC11) | _BV(ISC10);  //INT1: rising
-	EICRA |= ~_BV(ISC21) | _BV(ISC20); //INT2: edge triggered
-	EICRA |= _BV(ISC31) | _BV(ISC30);  //INT3: rising
+	EICRA |= _BV(ISC01) | _BV(ISC00);  //INT0: rising		  -> ?
+	EICRA |= _BV(ISC11) | _BV(ISC10);  //INT1: rising		  -> ?
+	EICRA |= ~_BV(ISC21) | _BV(ISC20); //INT2: edge triggered -> reflective stage reflective sensor (OR)
+	EICRA |= _BV(ISC31) | _BV(ISC30);  //INT3: rising		  -> ?
 	//EICRA = 0b11011111;
 	
 
@@ -157,12 +173,18 @@ void init_motor() {
 
 // Initialize the ADC when program starts
 void init_ADC(){
+	
 	//disable all interrupts
 	cli();
 	
+	//initialize global variables
+	ADC_result = 0x3F;
+	ADC_lowest_val = 0x3F;
+	reflective_present = 0;
+	
 	//configure external interrupts
 	EIMSK |= (_BV(INT2)); //enable INT2
-	EICRA |= (_BV(ISC21) | _BV(ISC20)); //rising edge interrupt
+	EICRA |= ~(_BV(ISC21) | _BV(ISC20)); //edge triggered interrupts
 	
 	//configure the ADC
 	//by default ADC analog input set to ADC0/PORTF0
@@ -173,7 +195,7 @@ void init_ADC(){
 	//enable all interrupts
 	sei();
 	
-}//ADC
+}//init_ADC
 
 // Set Port A to output (for stepper motor), initialize pins to Step 1 position, reset global variables
 void init_stepper(){
@@ -241,18 +263,6 @@ void change_motor_direction() {
 	}
 }//change_motor_direction
 
-void ADC_run() {
-	//initialize ADC, start one conversion at the beginning
-	ADCSRA |= _BV(ADSC);
-	
-	if(ADC_result_flag){
-		//PORTC = ADC_result;
-		//update_motor_speed(ADC_result);
-		ADC_result_flag = 0x00;
-		ADCSRA |= _BV(ADSC); // ADC on rising edge
-	}//if
-}//ADC_run
-
 void stepperRotate(int steps, int direction) {
 	stepper_on = 1;
 	int delay = 20;
@@ -298,11 +308,93 @@ void stepper_position(int new_position){
 	mTimer(1500);
 }//stepper_position
 
-void testCode(char* temp_result){
-	ADC_run();
-	if((ADC_result < *temp_result) && (ADC_result != 0x00)) *temp_result = ADC_result;
-	PORTC = ADC_result;
-}
+void metal_sensor(queue* q){
+	link* item = initLink();
+	item->e.metal = is_metal;
+	item->e.stage = 1;
+	enqueue(q, item);
+}//metal_sensor
+
+void reflective_sensor(queue* q){
+	q->head->e.reflective = ADC_lowest_val;
+	q->head->e.stage = 2;
+}//reflective_sensor
+
+void exit_sensor(queue* q, char* sorted_parts[5]){
+	q->head->e.stage = 4;
+	link* item = dequeue(q);
+	int type = item->e.type;
+	deleteLink(item);
+	*(sorted_parts[type])++;
+}//exit_sensor
+
+void classify_item(queue* q, uint16_t** v){
+	uint16_t r = q->head->e.reflective;
+	int m = q->head->e.metal;
+	if((v[0][0] < r)  && (r < v[0][1]) && (m == 0)) q->head->e.type = 1; // white
+	if((v[1][0] < r)  && (r < v[1][1]) && (m == 0)) q->head->e.type = 2; // black
+	if((v[2][0] < r)  && (r < v[2][1]) && (m == 1)) q->head->e.type = 3; // aluminum
+	if((v[3][0] < r)  && (r < v[3][1]) && (m == 1)) q->head->e.type = 4; // steel
+	else q->head->e.type = 0; //unknown type
+	q->head->e.stage = 3;
+}//classify_part
+
+//Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
+void ADC_calibrate(uint16_t cal_vals_final[4][4]){
+	init_ADC();
+	init_motor();
+	int i,j,k;
+	uint16_t cal_vals[10];
+	uint16_t min, max, med, avg;
+	
+	for(j=0;j<4;j++)
+	{
+		// run part through 10 times, store the lowest value of each pass in an array
+		for(i=0;i<10;i++)
+		{
+			while(!item_ready) {}
+			PORTC = ADC_lowest_val & 0xFF00;
+			cal_vals[i] = ADC_lowest_val;					
+		}
+		// calculate the minimum, maximum, median, and mean of the 10 values
+		min = cal_vals[0];
+		max = cal_vals[0];
+		avg = cal_vals[0];
+		for(k=1;k<10;k++)
+		{
+			if(cal_vals[i] > max) max = cal_vals[i];
+			if(cal_vals[i] < min) min = cal_vals[i];
+			avg += cal_vals[i];
+		}
+		med = (min+max)/2;
+		avg = avg/10;
+		
+		//store the results in a 2D array: 
+		//           min  max  med  avg
+		// white    [0,0][0,1][0,2][0,3]
+		// black    [1,0][1,1][1,2][1,3]
+		// aluminum [2,0][2,1][2,2][2,3]
+		// steel    [3,0][3,1][3,2][3,3]
+		
+		cal_vals_final[j][0] = min;
+		cal_vals_final[j][1] = max;
+		cal_vals_final[j][2] = med;
+		cal_vals_final[j][3] = avg;
+		
+		// display the results for the part
+		PORTC = j;
+		mTimer(1000);
+		PORTC = min & 0xFF00;
+		mTimer(1000);
+		PORTC = max & 0xFF00;
+		mTimer(1000);
+		PORTC = med & 0xFF00;
+		mTimer(1000);
+		PORTC = avg & 0xFF00;
+		mTimer(1000);
+	}	
+}//ADC_calibrate
+
 //##############	Main Program	##############//
 
 int main(void)
@@ -312,21 +404,21 @@ int main(void)
 	DDRC = 0xFF;		// Port C all output (LEDs)
 	DDRD = 0xFF;		// Port D 3:0 = output (Motor)
 	
+	// Calibrate ADC before program starts
+	uint16_t calibration_values[4][4];
+	ADC_calibrate(calibration_values);
+	
 	// Init peripherals
 	//queue* itemList = initQueue();
 	//init_interrupts();
 	//init_timer0_pwm();
-	init_ADC();	
+	//init_ADC();	
 	//init_stepper();
 	//init_motor();
-	
-	// Testing variables
-	char temp_result = 0xFF;
 	
 	// Main Program
 	while (1)
 	{
-		testCode(&temp_result);
 		/*
 		goto POLLING_STAGE;
 
