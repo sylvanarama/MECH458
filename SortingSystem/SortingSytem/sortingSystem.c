@@ -40,8 +40,9 @@
 
 //##############GLOBAL VARIABLES##############//
 // ADC variables
-volatile unsigned char ADC_result;
+volatile uint16_t ADC_result;
 volatile unsigned int ADC_result_flag;
+volative unsigned int reflective_present;
 
 // Stepper variables
 volatile int motor_position;
@@ -63,7 +64,7 @@ ISR(TIMER0_COMPA_vect){
 //Interrupt when ADC finished
 ISR(ADC_vect)
 {
-	ADC_result = ADCH;
+	ADC_result = ((ADCH << 8) + ADCL);
 	ADC_result_flag = 1;
 }
 
@@ -76,6 +77,13 @@ ISR(INT0_vect){
 ISR(INT3_vect){
 	// Toggle PORTA bit 3 
 	STATE = 4;
+}
+
+//Optical Sensor for ADC, edge triggered
+ISR(INT2_vect){
+	if(reflective_present) reflective_present == 0;
+	else refelctive_present = 1;
+	ADC_run();
 }
 
 // If an unexpected interrupt occurs (interrupt is enabled and no handler is installed,
@@ -97,20 +105,23 @@ void init_interrupts(){
 
 	// Going to set up interrupt0 on PD0
 	DDRD = 0b11110110;
-	DDRA = 0xFF;	// just use as a display
 
-
-	// Set up the Interrupt 0,3 options
-	//External Inturrupt Control Register A - EICRA (pg 94 and under the EXT_INT tab to the right
-	// Set Interrupt sense control to catch a rising edge
-	EICRA |= _BV(ISC01) | _BV(ISC00);
-	EICRA |= _BV(ISC31) | _BV(ISC30);
+	// Set up the Interrupt 0, 1, 2, 3 options
+	//External Interrupt Control Register A - EICRA (pg 94 and under the EXT_INT tab to the right
+	// Set Interrupt sense control to catch a rising edge or any edge
+	EICRA |= _BV(ISC01) | _BV(ISC00);  //INT0: rising 
+	EICRA |= _BV(ISC11) | _BV(ISC10);  //INT1: rising
+	EICRA |= ~_BV(ISC21) | _BV(ISC20); //INT2: edge triggered
+	EICRA |= _BV(ISC31) | _BV(ISC30);  //INT3: rising
+	//EICRA = 0b11011111;
+	
 
 	//	EICRA &= ~_BV(ISC01) & ~_BV(ISC00); /* These lines would undo the above two lines */
 	//	EICRA &= ~_BV(ISC31) & ~_BV(ISC30); /* Nice little trick */
 
 	// See page 96 - EIFR External Interrupt Flags...notice how they reset on their own in 'C'...not in assembly
-	EIMSK |= 0x09;
+	// Enable external interrupts 0-3
+	EIMSK |= 0x0F;
 
 	// Enable all interrupts
 	sei();	// Note this sets the Global Enable for all interrupts
@@ -158,9 +169,6 @@ void init_ADC(){
 	ADCSRA |= _BV(ADEN);  //enable ADC
 	ADCSRA |= _BV(ADIE);  //enable interrupts for ADC
 	ADMUX  |= (_BV(ADLAR) | _BV(REFS0)); // left adjust ADC result, use AVcc as voltage ref, with ext. capacitor on AREF pin
-	
-	//set PORTC as output to display the ADC result, set to LOW initially
-	PORTC = 0x00;
 	
 	//enable all interrupts
 	sei();
@@ -293,7 +301,7 @@ void stepper_position(int new_position){
 void testCode(char* temp_result){
 	ADC_run();
 	if((ADC_result < *temp_result) && (ADC_result != 0x00)) *temp_result = ADC_result;
-	PORTC = *temp_result;
+	PORTC = ADC_result;
 }
 //##############	Main Program	##############//
 
@@ -305,12 +313,12 @@ int main(void)
 	DDRD = 0xFF;		// Port D 3:0 = output (Motor)
 	
 	// Init peripherals
-	queue* itemList = initQueue();
-	init_interrupts();
-	init_timer0_pwm();
+	//queue* itemList = initQueue();
+	//init_interrupts();
+	//init_timer0_pwm();
 	init_ADC();	
-	init_stepper();
-	init_motor();
+	//init_stepper();
+	//init_motor();
 	
 	// Testing variables
 	char temp_result = 0xFF;
