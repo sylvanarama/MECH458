@@ -4,5 +4,5 @@
 
 LinkedQueue.c
 
-main.c
+queue.c
 

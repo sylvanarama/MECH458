@@ -38,7 +38,7 @@ SUBDIRS :=
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
 ../LinkedQueue.c \
-../main.c
+../queue.c
 
 
 PREPROCESSING_SRCS += 
@@ -49,19 +49,19 @@ ASM_SRCS +=
 
 OBJS +=  \
 LinkedQueue.o \
-main.o
+queue.o
 
 OBJS_AS_ARGS +=  \
 LinkedQueue.o \
-main.o
+queue.o
 
 C_DEPS +=  \
 LinkedQueue.d \
-main.d
+queue.d
 
 C_DEPS_AS_ARGS +=  \
 LinkedQueue.d \
-main.d
+queue.d
 
 OUTPUT_FILE_PATH +=Lab3.elf
 

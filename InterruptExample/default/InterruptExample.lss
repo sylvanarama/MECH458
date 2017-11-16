@@ -1,0 +1,271 @@
+
+InterruptExample.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         0000018c  00000000  00000000  00000074  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .bss          00000001  00800100  00800100  00000200  2**0
+                  ALLOC
+  2 .debug_aranges 00000020  00000000  00000000  00000200  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  3 .debug_pubnames 00000058  00000000  00000000  00000220  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  4 .debug_info   00000107  00000000  00000000  00000278  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  5 .debug_abbrev 00000093  00000000  00000000  0000037f  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_line   00000112  00000000  00000000  00000412  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_frame  00000050  00000000  00000000  00000524  2**2
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_str    00000131  00000000  00000000  00000574  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	0c 94 4c 00 	jmp	0x98	; 0x98 <__ctors_end>
+   4:	0c 94 9c 00 	jmp	0x138	; 0x138 <__vector_1>
+   8:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+   c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  10:	0c 94 ab 00 	jmp	0x156	; 0x156 <__vector_4>
+  14:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  18:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  1c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  20:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  24:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  28:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  2c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  30:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  34:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  38:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  3c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  40:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  44:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  48:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  4c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  50:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  54:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  58:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  5c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  60:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  64:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  68:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  6c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  70:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  74:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  78:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  7c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  80:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  84:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  88:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  8c:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  90:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+  94:	0c 94 6c 00 	jmp	0xd8	; 0xd8 <__bad_interrupt>
+
+00000098 <__ctors_end>:
+  98:	11 24       	eor	r1, r1
+  9a:	1f be       	out	0x3f, r1	; 63
+  9c:	cf ef       	ldi	r28, 0xFF	; 255
+  9e:	d0 e2       	ldi	r29, 0x20	; 32
+  a0:	de bf       	out	0x3e, r29	; 62
+  a2:	cd bf       	out	0x3d, r28	; 61
+
+000000a4 <__do_copy_data>:
+  a4:	11 e0       	ldi	r17, 0x01	; 1
+  a6:	a0 e0       	ldi	r26, 0x00	; 0
+  a8:	b1 e0       	ldi	r27, 0x01	; 1
+  aa:	ec e8       	ldi	r30, 0x8C	; 140
+  ac:	f1 e0       	ldi	r31, 0x01	; 1
+  ae:	00 e0       	ldi	r16, 0x00	; 0
+  b0:	0b bf       	out	0x3b, r16	; 59
+  b2:	02 c0       	rjmp	.+4      	; 0xb8 <__do_copy_data+0x14>
+  b4:	07 90       	elpm	r0, Z+
+  b6:	0d 92       	st	X+, r0
+  b8:	a0 30       	cpi	r26, 0x00	; 0
+  ba:	b1 07       	cpc	r27, r17
+  bc:	d9 f7       	brne	.-10     	; 0xb4 <__do_copy_data+0x10>
+  be:	1b be       	out	0x3b, r1	; 59
+
+000000c0 <__do_clear_bss>:
+  c0:	11 e0       	ldi	r17, 0x01	; 1
+  c2:	a0 e0       	ldi	r26, 0x00	; 0
+  c4:	b1 e0       	ldi	r27, 0x01	; 1
+  c6:	01 c0       	rjmp	.+2      	; 0xca <.do_clear_bss_start>
+
+000000c8 <.do_clear_bss_loop>:
+  c8:	1d 92       	st	X+, r1
+
+000000ca <.do_clear_bss_start>:
+  ca:	a1 30       	cpi	r26, 0x01	; 1
+  cc:	b1 07       	cpc	r27, r17
+  ce:	e1 f7       	brne	.-8      	; 0xc8 <.do_clear_bss_loop>
+  d0:	0e 94 6e 00 	call	0xdc	; 0xdc <main>
+  d4:	0c 94 c4 00 	jmp	0x188	; 0x188 <_exit>
+
+000000d8 <__bad_interrupt>:
+  d8:	0c 94 ba 00 	jmp	0x174	; 0x174 <__vector_default>
+
+000000dc <main>:
+volatile char STATE;
+
+
+int main(){
+
+	STATE = 0;
+  dc:	10 92 00 01 	sts	0x0100, r1
+
+	cli();	// Disables all interrupts
+  e0:	f8 94       	cli
+
+	// Going to set up interrupt0 on PD0
+	DDRD = 0b11110110;
+  e2:	86 ef       	ldi	r24, 0xF6	; 246
+  e4:	8a b9       	out	0x0a, r24	; 10
+	DDRA = 0xFF;	// just use as a display
+  e6:	8f ef       	ldi	r24, 0xFF	; 255
+  e8:	81 b9       	out	0x01, r24	; 1
+
+
+	// Set up the Interrupt 0,3 options
+	//External Inturrupt Control Register A - EICRA (pg 94 and under the EXT_INT tab to the right
+	// Set Interrupt sense control to catch a rising edge
+	EICRA |= _BV(ISC01) | _BV(ISC00);
+  ea:	80 91 69 00 	lds	r24, 0x0069
+  ee:	83 60       	ori	r24, 0x03	; 3
+  f0:	80 93 69 00 	sts	0x0069, r24
+	EICRA |= _BV(ISC31) | _BV(ISC30);
+  f4:	80 91 69 00 	lds	r24, 0x0069
+  f8:	80 6c       	ori	r24, 0xC0	; 192
+  fa:	80 93 69 00 	sts	0x0069, r24
+//	EICRA &= ~_BV(ISC01) & ~_BV(ISC00); /* These lines would undo the above two lines */
+//	EICRA &= ~_BV(ISC31) & ~_BV(ISC30); /* Nice little trick */
+
+
+	// See page 96 - EIFR External Interrupt Flags...notice how they reset on their own in 'C'...not in assembly
+	EIMSK |= 0x09;
+  fe:	8d b3       	in	r24, 0x1d	; 29
+ 100:	89 60       	ori	r24, 0x09	; 9
+ 102:	8d bb       	out	0x1d, r24	; 29
+
+	// Enable all interrupts
+	sei();	// Note this sets the Global Enable for all interrupts
+ 104:	78 94       	sei
+
+	goto POLLING_STAGE;
+
+	// POLLING STATE
+	POLLING_STAGE: 
+		PORTA = 0x0F;	// Indicates this state is active
+ 106:	9f e0       	ldi	r25, 0x0F	; 15
+ 108:	92 b9       	out	0x02, r25	; 2
+		switch(STATE){
+ 10a:	80 91 00 01 	lds	r24, 0x0100
+ 10e:	82 30       	cpi	r24, 0x02	; 2
+ 110:	51 f0       	breq	.+20     	; 0x126 <main+0x4a>
+ 112:	83 30       	cpi	r24, 0x03	; 3
+ 114:	18 f4       	brcc	.+6      	; 0x11c <main+0x40>
+ 116:	81 30       	cpi	r24, 0x01	; 1
+ 118:	b9 f7       	brne	.-18     	; 0x108 <main+0x2c>
+ 11a:	05 c0       	rjmp	.+10     	; 0x126 <main+0x4a>
+ 11c:	84 30       	cpi	r24, 0x04	; 4
+ 11e:	19 f0       	breq	.+6      	; 0x126 <main+0x4a>
+ 120:	85 30       	cpi	r24, 0x05	; 5
+ 122:	91 f7       	brne	.-28     	; 0x108 <main+0x2c>
+ 124:	04 c0       	rjmp	.+8      	; 0x12e <main+0x52>
+		//Reset the state variable
+		STATE = 0;
+		goto POLLING_STAGE;
+	
+	BUCKET_STAGE:
+		PORTA = 0x04;
+ 126:	82 b9       	out	0x02, r24	; 2
+
+		//Reset the state variable
+		STATE = 0;
+ 128:	10 92 00 01 	sts	0x0100, r1
+ 12c:	ed cf       	rjmp	.-38     	; 0x108 <main+0x2c>
+		goto POLLING_STAGE;
+	
+	// The closing STATE ... how would you get here?
+	END: 
+		PORTA = 0xF0;	// Indicates this state is active
+ 12e:	80 ef       	ldi	r24, 0xF0	; 240
+ 130:	82 b9       	out	0x02, r24	; 2
+		// Stop everything!!!
+	return(0);
+
+}
+ 132:	80 e0       	ldi	r24, 0x00	; 0
+ 134:	90 e0       	ldi	r25, 0x00	; 0
+ 136:	08 95       	ret
+
+00000138 <__vector_1>:
+
+/* Set up the External Interrupt 0 Vector */
+ISR(INT0_vect){
+ 138:	1f 92       	push	r1
+ 13a:	0f 92       	push	r0
+ 13c:	0f b6       	in	r0, 0x3f	; 63
+ 13e:	0f 92       	push	r0
+ 140:	11 24       	eor	r1, r1
+ 142:	8f 93       	push	r24
+	/* Toggle PORTA bit 0 */
+	STATE = 2;
+ 144:	82 e0       	ldi	r24, 0x02	; 2
+ 146:	80 93 00 01 	sts	0x0100, r24
+}
+ 14a:	8f 91       	pop	r24
+ 14c:	0f 90       	pop	r0
+ 14e:	0f be       	out	0x3f, r0	; 63
+ 150:	0f 90       	pop	r0
+ 152:	1f 90       	pop	r1
+ 154:	18 95       	reti
+
+00000156 <__vector_4>:
+
+ISR(INT3_vect){
+ 156:	1f 92       	push	r1
+ 158:	0f 92       	push	r0
+ 15a:	0f b6       	in	r0, 0x3f	; 63
+ 15c:	0f 92       	push	r0
+ 15e:	11 24       	eor	r1, r1
+ 160:	8f 93       	push	r24
+	/* Toggle PORTA bit 3 */
+	STATE = 4;
+ 162:	84 e0       	ldi	r24, 0x04	; 4
+ 164:	80 93 00 01 	sts	0x0100, r24
+}
+ 168:	8f 91       	pop	r24
+ 16a:	0f 90       	pop	r0
+ 16c:	0f be       	out	0x3f, r0	; 63
+ 16e:	0f 90       	pop	r0
+ 170:	1f 90       	pop	r1
+ 172:	18 95       	reti
+
+00000174 <__vector_default>:
+// which usually indicates a bug), then the default action is to reset the device by jumping 
+// to the reset vector. You can override this by supplying a function named BADISR_vect which 
+// should be defined with ISR() as such. (The name BADISR_vect is actually an alias for __vector_default.
+// The latter must be used inside assembly code in case <avr/interrupt.h> is not included.
+ISR(BADISR_vect)
+{
+ 174:	1f 92       	push	r1
+ 176:	0f 92       	push	r0
+ 178:	0f b6       	in	r0, 0x3f	; 63
+ 17a:	0f 92       	push	r0
+ 17c:	11 24       	eor	r1, r1
+    // user code here
+}
+ 17e:	0f 90       	pop	r0
+ 180:	0f be       	out	0x3f, r0	; 63
+ 182:	0f 90       	pop	r0
+ 184:	1f 90       	pop	r1
+ 186:	18 95       	reti
+
+00000188 <_exit>:
+ 188:	f8 94       	cli
+
+0000018a <__stop_program>:
+ 18a:	ff cf       	rjmp	.-2      	; 0x18a <__stop_program>
