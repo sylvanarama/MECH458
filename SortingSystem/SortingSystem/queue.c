@@ -7,14 +7,14 @@
 * DESC: This initializes a link and returns the pointer to the new link or NULL if error 
 * INPUT: the head and tail pointers by reference
 */
-link* initLink(){
-	link* newLink = malloc(sizeof(link));
-	newLink->next = NULL;
-	newLink->e.metal = 0;
-	newLink->e.reflective = 0;
-	newLink->e.type = 0;
-	newLink->e.stage = 0;
-	return newLink;
+item* initItem(){
+	item* newItem = malloc(sizeof(item));
+	newItem->next = NULL;
+	newItem->metal = 0;
+	newItem->reflective = 0;
+	newItem->type = 0;
+	newItem->stage = 0;
+	return newItem;
 }//initLink
 
 queue* initQueue(){
@@ -28,16 +28,16 @@ queue* initQueue(){
 *  DESC: Accepts as input a new link by reference, and assigns the head and tail		
 *  of the queue accordingly (Will put an item at the tail of the queue)		
 */
-void enqueue(queue* q, link* newLink){
+void enqueue(queue* q, item* newItem){
 	if (q->tail != NULL){
 		/* Not an empty queue */
-		q->tail->next = newLink;
-		q->tail = newLink;
+		q->tail->next = newItem;
+		q->tail = newItem;
 	}/*if*/
 	else{
 		/* It's an empty Queue */
-		q->head = newLink;
-		q->tail = newLink;
+		q->head = newItem;
+		q->tail = newItem;
 	}/* else */
 	return;
 }/*enqueue*/
@@ -47,27 +47,27 @@ void enqueue(queue* q, link* newLink){
 * DESC : Removes the link from the head of the list and assigns it to deQueuedLink
 * RETURNS: Pointer to the dequeued link
 */
-link* dequeue(queue* q){
-	link* deQueuedLink = q->head;	// Will set to NULL if Head points to NULL
+item* dequeue(queue* q){
+	item* deQueuedItem = q->head;	// Will set to NULL if Head points to NULL
 	/* Ensure it is not an empty queue */
 	if (q->head != NULL){
 		q->head = q->head->next;
 	}/*if*/
 	if(q->head == NULL) q->tail = NULL; // if that was the last element in the queue, set tail to NULL as well
-	return deQueuedLink;
+	return deQueuedItem;
 }/*dequeue*/
 
 
 /**************************************************************************************
-* DESC: Peeks at the first or last element in the list
+* DESC: Peeks at the first or last item in the list
 * RETURNS: The element contained within the queue
 */
-element firstValue(queue* q){
-	return(q->head->e);
+item firstValue(queue* q){
+	return *(q->head);
 }//firstValue
 
-element lastValue(queue* q){
-	return (q->tail->e);
+item lastValue(queue* q){
+	return *(q->tail);
 }//lastValue
 
 
@@ -76,7 +76,7 @@ element lastValue(queue* q){
 * INPUT: the pointers to the head and the tail
 */
 void clearQueue(queue* q){
-	link *temp;
+	item *temp;
 	
 	while (q->head != NULL){
 		temp = q->head;
@@ -88,27 +88,27 @@ void clearQueue(queue* q){
 	return;
 }//clearQueue
 
-void deleteLink(link* L){
-	free(L);
+void deleteItem(item* i){
+	free(i);
 }
 
-void resetLink(link* L){
-	L->e.metal = 0;
-	L->e.reflective = 0;
-	L->e.type = 0;
-	L->e.stage = 0;
+void resetItem(item* i){
+	i->metal = 0;
+	i->reflective = 0;
+	i->type = 0;
+	i->stage = 0;
 }
 
-void updateLink(link* L, int metal, int reflective, int type, int stage){
-	L->e.metal = metal;
-	L->e.reflective = reflective;
-	L->e.type = type;
-	L->e.stage = stage;
+void updateItem(item* i, char metal, char reflective, char type, char stage){
+	i->metal = metal;
+	i->reflective = reflective;
+	i->type = type;
+	i->stage = stage;
 }
 
-int elementType(link* L){
-	L->e.type = L->e.metal + L->e.reflective;
-	return (L->e.type);
+char itemType(item* i){
+	i->type = i->metal + i->reflective;
+	return (i->type);
 }
 
 /**************************************************************************************
@@ -126,14 +126,14 @@ int isEmpty(queue* q){
 * RETURNS: An integer with the number of links in the queue
 */
 int size(queue* q){
-	link* temp = q->head;			
-	int numElements = 0;
+	item* temp = q->head;			
+	int numItems = 0;
 
 	while(temp != NULL){
-		numElements++;
+		numItems++;
 		temp = temp->next;
 	}/*while*/
 	
-	return(numElements);
+	return(numItems);
 }//size
 
