@@ -181,6 +181,7 @@ void init_ADC(){
 	ADC_result = 0x3F;
 	ADC_lowest_val = 0x3F;
 	reflective_present = 0;
+	item_ready = 0;
 	
 	//configure external interrupts
 	EIMSK |= (_BV(INT2)); //enable INT2
@@ -342,20 +343,25 @@ void classify_item(queue* q, uint16_t** v){
 //Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
 void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 	init_ADC();
+	init_timer0_pwm();
 	init_motor();
 	int i,j,k;
 	uint16_t cal_vals[10];
 	uint16_t min, max, med, avg;
+	PORTC = 0xFF;
 	
-	for(j=0;j<4;j++)
+	for(j=0;j<1;j++)
 	{
 		// run part through 10 times, store the lowest value of each pass in an array
 		for(i=0;i<10;i++)
 		{
 			while(!item_ready) {}
-			PORTC = ADC_lowest_val & 0xFF00;
-			cal_vals[i] = ADC_lowest_val;					
+			PORTC = (char)i;
+			cal_vals[i] = ADC_lowest_val;	
+			ADC_lowest_val = 0x3F;	
+			item_ready = 0;		
 		}
+		update_motor_speed(0x00);
 		// calculate the minimum, maximum, median, and mean of the 10 values
 		min = cal_vals[0];
 		max = cal_vals[0];
@@ -392,7 +398,7 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		mTimer(1000);
 		PORTC = avg & 0xFF00;
 		mTimer(1000);
-	}	
+	//}	
 }//ADC_calibrate
 
 //##############	Main Program	##############//
