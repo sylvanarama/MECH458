@@ -65,8 +65,26 @@ ISR(TIMER0_COMPA_vect){
 	return;
 }
 
-//Optical Sensor for ADC, edge triggered
+// Optical Sensor 1 (PD0)
+ISR(INT0_vect){
+	// testing
+	PORTC |= 0x10;
+	//PORTC = PIND;
+}
+
+// Ferromagnetic Sensor (PD1)
+ISR(INT1_vect){
+	// testing
+	PORTC |= 0x20;
+	//PORTC = PIND;
+}
+
+//Optical Sensor for ADC, edge triggered (PD2)
 ISR(INT2_vect){
+	// testing
+	PORTC |= 0x40;
+	//PORTC = PIND;
+	
 	//object exiting reflective sensor zone, item ready to be classified
 	if(reflective_present) 
 	{
@@ -81,6 +99,13 @@ ISR(INT2_vect){
 	}
 }
 
+// Optical sensor - exit position (PD3)
+ISR(INT3_vect){
+	// testing
+	PORTC |= 0x80;
+	//PORTC = PIND;
+}
+
 //Interrupt when ADC finished
 ISR(ADC_vect)
 {
@@ -89,16 +114,7 @@ ISR(ADC_vect)
 	if(reflective_present) ADCSRA |= _BV(ADSC);
 }
 
-// Set up the External Interrupt 0 Vector 
-ISR(INT0_vect){
-	// Toggle PORTA bit 0 
-	STATE = 2;
-}
 
-ISR(INT3_vect){
-	// Toggle PORTA bit 3 
-	STATE = 4;
-}
 
 
 
@@ -116,37 +132,21 @@ ISR(BADISR_vect)
 
 //Set up the interrupts
 void init_interrupts(){		
-	STATE = 0;
-	cli();	// Disables all interrupts
-
-	// Going to set up interrupt0 on PD0
-	DDRD = 0b11110110;
-
-	// Set up the Interrupt 0, 1, 2, 3 options
-	//External Interrupt Control Register A - EICRA (pg 94 and under the EXT_INT tab to the right
-	// Set Interrupt sense control to catch a rising edge or any edge
-	EICRA |= _BV(ISC01) | _BV(ISC00);  //INT0: rising		  -> ?
-	EICRA |= _BV(ISC11) | _BV(ISC10);  //INT1: rising		  -> ?
-	EICRA |= ~_BV(ISC21) | _BV(ISC20); //INT2: edge triggered -> reflective stage reflective sensor (OR)
-	EICRA |= _BV(ISC31) | _BV(ISC30);  //INT3: rising		  -> ?
-	//EICRA = 0b11011111;
+	// Specify when interrupts are triggered
+		// INT0 (OS2) - Falling edge
+		// INT1 (Fer) - Falling edge
+		// INT2 (OS2) - Either edge
+		// INT3 (OS3) - Falling edge
+	EICRA = 0x9A;
 	
-
-	//	EICRA &= ~_BV(ISC01) & ~_BV(ISC00); /* These lines would undo the above two lines */
-	//	EICRA &= ~_BV(ISC31) & ~_BV(ISC30); /* Nice little trick */
-
-	// See page 96 - EIFR External Interrupt Flags...notice how they reset on their own in 'C'...not in assembly
-	// Enable external interrupts 0-3
+	// Enable external interrupts for Port D
 	EIMSK |= 0x0F;
-
-	// Enable all interrupts
-	sei();	// Note this sets the Global Enable for all interrupts
 }
 
 // Initialize PWM on Timer0
 void init_timer0_pwm() {
 	// Set PB7 to output (for PWM signal)
-	DDRB |=0x80;
+	//DDRB |=0x80;		<- in main
 	
 	// Set Waveform Generation Mode to 3 - Fast PWM with TOP = MAX, and OCRA = Compare value
 	TCCR0A |= 0x83;		// TCCR0A7:6 -> COM0A = 0b10	(inverted mode)
@@ -167,16 +167,12 @@ void init_timer0_pwm() {
 
 // Start the motor when program starts
 void init_motor() {
-	PORTD =  CW;
+	PORTB =  CW;
 	OCR0A = MOTOR_SPEED;
 }
 
 // Initialize the ADC when program starts
-void init_ADC(){
-	
-	//disable all interrupts
-	cli();
-	
+void init_ADC(){	
 	//initialize global variables
 	ADC_result = 0x3F;
 	ADC_lowest_val = 0x3F;
@@ -192,9 +188,6 @@ void init_ADC(){
 	ADCSRA |= _BV(ADEN);  //enable ADC
 	ADCSRA |= _BV(ADIE);  //enable interrupts for ADC
 	ADMUX  |= (_BV(ADLAR) | _BV(REFS0)); // left adjust ADC result, use AVcc as voltage ref, with ext. capacitor on AREF pin
-	
-	//enable all interrupts
-	sei();
 	
 }//init_ADC
 
@@ -342,13 +335,11 @@ void classify_item(queue* q, uint16_t** v){
 
 //Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
 void ADC_calibrate(uint16_t cal_vals_final[4][4]){
-	init_ADC();
-	init_timer0_pwm();
-	init_motor();
+	
 	int i,j,k;
 	uint16_t cal_vals[10];
 	uint16_t min, max, med, avg;
-	PORTC = 0xFF;
+	//PORTC = 0xFF;
 	
 	for(j=0;j<1;j++)
 	{
@@ -398,7 +389,7 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		mTimer(1000);
 		PORTC = avg & 0xFF00;
 		mTimer(1000);
-	//}	
+	}	
 }//ADC_calibrate
 
 //##############	Main Program	##############//
@@ -407,78 +398,34 @@ int main(void)
 {
 	// Init port directions
 	DDRA = 0x00;		// Port A all inputs (button and switch)
+	DDRB = 0x8F;			// PB7 = output for PWM signal
+						// PB3:0 = output for motor
 	DDRC = 0xFF;		// Port C all output (LEDs)
-	DDRD = 0xFF;		// Port D 3:0 = output (Motor)
+	DDRD = 0xF0;		// Port D 3:0 = sensor input (External Interrupts)
+	
+	PORTC = 0x00;
+	
+	// Initialize Peripherals
+	cli();
+	init_ADC();
+	init_timer0_pwm();
+	init_motor();
+	init_interrupts();
+	//init_stepper();
+	sei();
 	
 	// Calibrate ADC before program starts
 	uint16_t calibration_values[4][4];
-	ADC_calibrate(calibration_values);
-	
-	// Init peripherals
-	//queue* itemList = initQueue();
-	//init_interrupts();
-	//init_timer0_pwm();
-	//init_ADC();	
-	//init_stepper();
-	//init_motor();
-	
+	//ADC_calibrate(calibration_values);
+		
 	// Main Program
 	while (1)
 	{
-		/*
-		goto POLLING_STAGE;
-
-		// POLLING STATE
-		POLLING_STAGE:
-		PORTC = 0x0F;	// Indicates this state is active
-		switch(STATE){
-			case (0) :
-				goto POLLING_STAGE;
-				break;	
-			case (1) :
-				goto MAGNETIC_STAGE;
-				break;
-			case (2) :
-				goto REFLECTIVE_STAGE;
-				break;
-			case (4) :
-				goto BUCKET_STAGE;
-				break;
-			case (5) :
-				goto END;
-			default :
-				goto POLLING_STAGE;
-		}//switch STATE
 		
-
-		MAGNETIC_STAGE:
-		// Do whatever is necessary HERE
-		PORTC = 0x01; // Just output pretty lights know you made it here
-		//Reset the state variable
-		STATE = 0;
-		goto POLLING_STAGE;
-
-		REFLECTIVE_STAGE:
-		// Do whatever is necessary HERE
-		PORTC = 0x02; // Just output pretty lights know you made it here
-		//Reset the state variable
-		STATE = 0;
-		goto POLLING_STAGE;
-		
-		BUCKET_STAGE:
-		// Do whatever is necessary HERE
-		PORTC = 0x04;
-		//Reset the state variable
-		STATE = 0;
-		goto POLLING_STAGE;
-		
-		END:
-		// The closing STATE ... how would you get here?
-		PORTC = 0xF0;	// Indicates this state is active
-		// Stop everything here...'MAKE SAFE'
-		*/
 	}//while
 	return 0;
 }//main
+
+
 
 
