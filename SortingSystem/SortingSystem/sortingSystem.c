@@ -42,10 +42,10 @@
 // ADC variables
 volatile uint16_t ADC_result;
 volatile uint16_t ADC_lowest_val;
-volatile char reflective_present;
+volatile uint8_t reflective_present;
 
 // Sensor variables
-volatile char is_metal;
+volatile uint8_t is_metal;
 
 // Stepper variables
 volatile int motor_position;
@@ -56,8 +56,8 @@ volatile int stepper_on;
 uint8_t motor_direction = CW;
 
 // State and Control Variables
-volatile char STATE;
-volatile char item_ready;
+volatile uint8_t STATE;
+volatile uint8_t item_ready;
 
 //##############	ISRs	##############//
 ISR(TIMER0_COMPA_vect){
@@ -385,7 +385,6 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		cal_vals_final[j][3] = avg;
 		
 		// display the results for the part
-<<<<<<< HEAD
 		PORTC = j;
 		mTimer(1000);
 		PORTC = min & 0xFF00;
@@ -396,8 +395,7 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		mTimer(1000);
 		PORTC = avg & 0xFF00;
 		mTimer(1000);
-	}	
-=======
+		
 		// 1: min, 2: max, 3: med, 4: avg
 		// TODO: cycle display until button pressed and then move on to next part?
 		PORTC = 0x01;
@@ -420,7 +418,6 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		PORTC = avg;
 		mTimer(500);
 	}
->>>>>>> 8861deb672f3bf3db1cf03c1295fb984bc223c19
 }//ADC_calibrate
 
 //##############	Main Program	##############//
@@ -428,12 +425,13 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 int main(void)
 {
 	// Init port directions
-<<<<<<< HEAD
 	DDRA = 0x00;		// Port A all inputs (button and switch)
-	DDRB = 0x8F;			// PB7 = output for PWM signal
+	DDRB = 0x8F;		// PB7 = output for PWM signal
 						// PB3:0 = output for motor
 	DDRC = 0xFF;		// Port C all output (LEDs)
 	DDRD = 0xF0;		// Port D 3:0 = sensor input (External Interrupts)
+	DDRE = 0x00;		// Port E input (buttons/interrupts)
+	DDRF = 0x00;		// Port F input (ADC and ?)
 	
 	PORTC = 0x00;
 	
@@ -443,40 +441,20 @@ int main(void)
 	init_timer0_pwm();
 	init_motor();
 	init_interrupts();
-=======
-	DDRA = 0x00;		// Port A all outputs (stepper motor)
-	DDRC = 0xFF;		// Port C all output (LEDs)
-	DDRD = 0xF0;		// Port D 3:0 = input (sensors/interrupts)
-	DDRF = 0x00;		// Port F input (ADC and ?)
-	DDRE = 0x00;		// Port E input (buttons/interrupts)
-	DDRB = 0xFF;        // Port B all outputs (DC motor and PWM)
-	
+	//init_stepper();
+	sei();
+
 	// Calibrate ADC before program starts
 	//CHECK: is the array passed by reference? Should a struct be used instead?
 	uint16_t calibration_values[4][4];
-	ADC_calibrate(calibration_values);
-	
-	// Init peripherals
-	//queue* itemList = initQueue();
-	//init_interrupts();
-	//init_timer0_pwm();
-	//init_ADC();
->>>>>>> 8861deb672f3bf3db1cf03c1295fb984bc223c19
-	//init_stepper();
-	sei();
-	
-<<<<<<< HEAD
-	// Calibrate ADC before program starts
-	uint16_t calibration_values[4][4];
 	//ADC_calibrate(calibration_values);
+
 		
 	// Main Program
 	while (1)
 	{
 		
 	}//while
-=======
->>>>>>> 8861deb672f3bf3db1cf03c1295fb984bc223c19
 	return 0;
 }//main
 
