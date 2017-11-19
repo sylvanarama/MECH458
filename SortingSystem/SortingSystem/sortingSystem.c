@@ -26,10 +26,10 @@
 #define MOTOR_SPEED 0x70
 
 // Stepper
-#define STEP1 0x30
-#define STEP2 0x06
-#define STEP3 0x28
-#define STEP4 0x05
+#define STEP1 0x35
+#define STEP2 0x36
+#define STEP3 0x2E
+#define STEP4 0x2D
 #define CLOCKWISE 1
 #define WIDDERSHINS -1
 #define TURN_90 50
@@ -53,7 +53,7 @@ volatile int stepnum;
 volatile int stepper_on;
 
 // Motor variables
-uint8_t motor_direction = 0x04;
+uint8_t motor_direction = CW;
 
 // State and Control Variables
 volatile char STATE;
@@ -109,9 +109,13 @@ ISR(INT3_vect){
 //Interrupt when ADC finished
 ISR(ADC_vect)
 {
-	ADC_result = ((ADCH << 8) + ADCL);
-	if(ADC_result < ADC_lowest_val) ADC_lowest_val = ADC_result;
-	if(reflective_present) ADCSRA |= _BV(ADSC);
+
+	if(reflective_present) {
+		//ADC_result = ((ADCH << 8) + ADCL);
+		ADC_result = ADCH;
+		if(ADC_result < ADC_lowest_val) ADC_lowest_val = ADC_result;
+		ADCSRA |= _BV(ADSC);
+	}
 }
 
 
@@ -174,14 +178,15 @@ void init_motor() {
 // Initialize the ADC when program starts
 void init_ADC(){	
 	//initialize global variables
-	ADC_result = 0x3F;
-	ADC_lowest_val = 0x3F;
+	ADC_result = 0xFF;
+	ADC_lowest_val = 0xFF;
 	reflective_present = 0;
 	item_ready = 0;
 	
 	//configure external interrupts
 	EIMSK |= (_BV(INT2)); //enable INT2
-	EICRA |= ~(_BV(ISC21) | _BV(ISC20)); //edge triggered interrupts
+	EICRA = 0x10;
+	//EICRA |= ~(_BV(ISC21) | _BV(ISC20)); //edge triggered interrupts
 	
 	//configure the ADC
 	//by default ADC analog input set to ADC0/PORTF0
@@ -204,6 +209,7 @@ void init_stepper(){
 void mTimer(int count)
 {
 	int i=0;
+	TCCR1B |= _BV(CS10);
 	TCCR1B |= _BV(WGM12);	// Set WGM bits to 0100, see pg 142
 	OCR1A = 0x03E8;			// Set output compare register for 1000 cycles  = 1ms
 	TCNT1 = 0x0000;			// Set initial value of Timer Counter to 0x000
@@ -239,7 +245,7 @@ void update_motor_speed(uint16_t speed){
 void change_motor_direction() {
 	if ((PINA & 0x01) == PINA2_LOW) {
 		// Break the motor
-		PORTD = 0x00;
+		PORTB = 0x00;
 		
 		mTimer(20);
 		
@@ -249,10 +255,10 @@ void change_motor_direction() {
 		// Reverse motor direction
 		if (motor_direction == CW) {
 			motor_direction = CCW;
-			PORTD = CCW;
+			PORTB = CCW;
 			} else {
 			motor_direction = CW;
-			PORTD = CW;
+			PORTB = CW;
 		}
 	}
 }//change_motor_direction
@@ -298,39 +304,37 @@ void stepper_position(int new_position){
 	else if((diff == 2) || (diff == -2)) stepperRotate(TURN_180, CLOCKWISE);
 
 	motor_position = new_position;
-	
-	mTimer(1500);
 }//stepper_position
 
 void metal_sensor(queue* q){
-	link* item = initLink();
-	item->e.metal = is_metal;
-	item->e.stage = 1;
+	item* item = initItem();
+	item->metal = is_metal;
+	item->stage = 1;
 	enqueue(q, item);
 }//metal_sensor
 
 void reflective_sensor(queue* q){
-	q->head->e.reflective = ADC_lowest_val;
-	q->head->e.stage = 2;
+	q->head->reflective = ADC_lowest_val;
+	q->head->stage = 2;
 }//reflective_sensor
 
 void exit_sensor(queue* q, char* sorted_parts[5]){
-	q->head->e.stage = 4;
-	link* item = dequeue(q);
-	int type = item->e.type;
-	deleteLink(item);
+	q->head->stage = 4;
+	item* item = dequeue(q);
+	char type = item->type;
+	deleteItem(item);
 	*(sorted_parts[type])++;
 }//exit_sensor
 
 void classify_item(queue* q, uint16_t** v){
-	uint16_t r = q->head->e.reflective;
-	int m = q->head->e.metal;
-	if((v[0][0] < r)  && (r < v[0][1]) && (m == 0)) q->head->e.type = 1; // white
-	if((v[1][0] < r)  && (r < v[1][1]) && (m == 0)) q->head->e.type = 2; // black
-	if((v[2][0] < r)  && (r < v[2][1]) && (m == 1)) q->head->e.type = 3; // aluminum
-	if((v[3][0] < r)  && (r < v[3][1]) && (m == 1)) q->head->e.type = 4; // steel
-	else q->head->e.type = 0; //unknown type
-	q->head->e.stage = 3;
+	uint16_t r = q->head->reflective;
+	uint16_t m = q->head->metal;
+	if((v[0][0] < r)  && (r < v[0][1]) && (m == 0)) q->head->type = 1; // white
+	if((v[1][0] < r)  && (r < v[1][1]) && (m == 0)) q->head->type = 2; // black
+	if((v[2][0] < r)  && (r < v[2][1]) && (m == 1)) q->head->type = 3; // aluminum
+	if((v[3][0] < r)  && (r < v[3][1]) && (m == 1)) q->head->type = 4; // steel
+	else q->head->type = 0; //unknown type
+	q->head->stage = 3;
 }//classify_part
 
 //Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
@@ -341,32 +345,34 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 	uint16_t min, max, med, avg;
 	//PORTC = 0xFF;
 	
-	for(j=0;j<1;j++)
+	for(j=0;j<4;j++)
 	{
 		// run part through 10 times, store the lowest value of each pass in an array
 		for(i=0;i<10;i++)
 		{
 			while(!item_ready) {}
-			PORTC = (char)i;
-			cal_vals[i] = ADC_lowest_val;	
-			ADC_lowest_val = 0x3F;	
-			item_ready = 0;		
+			PORTC = (char)(i+1);
+			//PORTC = ADC_lowest_val;
+			cal_vals[i] = ADC_lowest_val;
+			ADC_lowest_val = 0xFF;
+			item_ready = 0;
 		}
-		update_motor_speed(0x00);
+		PORTC = 0xFF; //signal that all 10 values have been read
+		mTimer(100);
 		// calculate the minimum, maximum, median, and mean of the 10 values
 		min = cal_vals[0];
 		max = cal_vals[0];
 		avg = cal_vals[0];
 		for(k=1;k<10;k++)
 		{
-			if(cal_vals[i] > max) max = cal_vals[i];
-			if(cal_vals[i] < min) min = cal_vals[i];
-			avg += cal_vals[i];
+			if(cal_vals[k] > max) max = cal_vals[k];
+			if(cal_vals[k] < min) min = cal_vals[k];
+			avg += cal_vals[k];
 		}
 		med = (min+max)/2;
 		avg = avg/10;
 		
-		//store the results in a 2D array: 
+		//store the results in a 2D array:
 		//           min  max  med  avg
 		// white    [0,0][0,1][0,2][0,3]
 		// black    [1,0][1,1][1,2][1,3]
@@ -379,6 +385,7 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		cal_vals_final[j][3] = avg;
 		
 		// display the results for the part
+<<<<<<< HEAD
 		PORTC = j;
 		mTimer(1000);
 		PORTC = min & 0xFF00;
@@ -390,6 +397,30 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		PORTC = avg & 0xFF00;
 		mTimer(1000);
 	}	
+=======
+		// 1: min, 2: max, 3: med, 4: avg
+		// TODO: cycle display until button pressed and then move on to next part?
+		PORTC = 0x01;
+		mTimer(100);
+		PORTC = min;
+		mTimer(500);
+
+		PORTC = 0x02;
+		mTimer(100);
+		PORTC = max;
+		mTimer(500);
+
+		PORTC = 0x03;
+		mTimer(100);
+		PORTC = med;
+		mTimer(500);
+
+		PORTC = 0x04;
+		mTimer(100);
+		PORTC = avg;
+		mTimer(500);
+	}
+>>>>>>> 8861deb672f3bf3db1cf03c1295fb984bc223c19
 }//ADC_calibrate
 
 //##############	Main Program	##############//
@@ -397,6 +428,7 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 int main(void)
 {
 	// Init port directions
+<<<<<<< HEAD
 	DDRA = 0x00;		// Port A all inputs (button and switch)
 	DDRB = 0x8F;			// PB7 = output for PWM signal
 						// PB3:0 = output for motor
@@ -411,9 +443,29 @@ int main(void)
 	init_timer0_pwm();
 	init_motor();
 	init_interrupts();
+=======
+	DDRA = 0x00;		// Port A all outputs (stepper motor)
+	DDRC = 0xFF;		// Port C all output (LEDs)
+	DDRD = 0xF0;		// Port D 3:0 = input (sensors/interrupts)
+	DDRF = 0x00;		// Port F input (ADC and ?)
+	DDRE = 0x00;		// Port E input (buttons/interrupts)
+	DDRB = 0xFF;        // Port B all outputs (DC motor and PWM)
+	
+	// Calibrate ADC before program starts
+	//CHECK: is the array passed by reference? Should a struct be used instead?
+	uint16_t calibration_values[4][4];
+	ADC_calibrate(calibration_values);
+	
+	// Init peripherals
+	//queue* itemList = initQueue();
+	//init_interrupts();
+	//init_timer0_pwm();
+	//init_ADC();
+>>>>>>> 8861deb672f3bf3db1cf03c1295fb984bc223c19
 	//init_stepper();
 	sei();
 	
+<<<<<<< HEAD
 	// Calibrate ADC before program starts
 	uint16_t calibration_values[4][4];
 	//ADC_calibrate(calibration_values);
@@ -423,6 +475,8 @@ int main(void)
 	{
 		
 	}//while
+=======
+>>>>>>> 8861deb672f3bf3db1cf03c1295fb984bc223c19
 	return 0;
 }//main
 
