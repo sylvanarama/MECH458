@@ -132,6 +132,9 @@
     <Compile Include="sortingSystem.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="sortingSystem.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="stepper_motor.c">
       <SubType>compile</SubType>
     </Compile>

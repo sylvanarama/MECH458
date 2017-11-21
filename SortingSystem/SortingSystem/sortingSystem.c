@@ -15,15 +15,35 @@
 #include <util/delay_basic.h>	// header for delay library
 #include <avr/interrupt.h>		// header for interrupt function library
 #include "queue.h"				// header for the linked queue function library
+#include "sortingSystem.h"
+
+// Constants
+#define TRUE					1
+#define FALSE					0
+
+// States
+#define CALIBRATION				1
+#define OPERATIONAL				2
+#define PAUSED					3
+#define RAMP_DOWN				4
+
+// MASKS
+#define SENSOR_READING_MASK		0x3FF
+
+// MATERIALS
+#define WHITE					10
+#define BLACK					11
+#define ALUMINUM				12
+#define STEEL					13
 
 //Button
-#define PINA2_HIGH	0x04
-#define PINA2_LOW	0x00	// Active
+#define PINA2_HIGH				0x04
+#define PINA2_LOW				0x00	// Active
 
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED 0x70
+#define MOTOR_SPEED				0XFA	//0x70
 
 // Stepper
 #define STEP1 0x35
@@ -38,7 +58,17 @@
 
 #define WAIT 0x01			// PORTx = 0bXXXXXXX1, means wait to read data from the port
 
+
+// TYPES
+typedef struct input_object {
+	uint8_t metallic;
+	uint8_t type;
+} input_object;
+
 //##############GLOBAL VARIABLES##############//
+// Calibration
+volatile uint16_t cal_vals_final[4][4];
+
 // ADC variables
 volatile uint16_t ADC_result;
 volatile uint16_t ADC_lowest_val;
@@ -68,21 +98,21 @@ ISR(TIMER0_COMPA_vect){
 // Optical Sensor 1 (PD0)
 ISR(INT0_vect){
 	// testing
-	PORTC |= 0x10;
-	//PORTC = PIND;
+	display_reflective_reading(0);
+	//PORTC = 0x10;
 }
 
 // Ferromagnetic Sensor (PD1)
 ISR(INT1_vect){
 	// testing
-	PORTC |= 0x20;
+	//PORTC |= 0x20;
 	//PORTC = PIND;
 }
 
 //Optical Sensor for ADC, edge triggered (PD2)
 ISR(INT2_vect){
 	// testing
-	PORTC |= 0x40;
+	//PORTC |= 0x40;
 	//PORTC = PIND;
 	
 	//object exiting reflective sensor zone, item ready to be classified
@@ -90,6 +120,9 @@ ISR(INT2_vect){
 	{
 		reflective_present = 0;
 		item_ready = 1;
+		
+		// testing
+		//display_reflective_reading(ADC_result);
 	}
 	// object entering the reflective sensor zone, start ADC conversion
 	else
@@ -102,17 +135,36 @@ ISR(INT2_vect){
 // Optical sensor - exit position (PD3)
 ISR(INT3_vect){
 	// testing
-	PORTC |= 0x80;
-	//PORTC = PIND;
+	//PORTC |= 0x80;
+	display_reflective_reading(ADC_result);
+	ADC_lowest_val = 0xFFF;
 }
+
 
 //Interrupt when ADC finished
 ISR(ADC_vect)
 {
-
+	
+	//ADC_result = 0;	// Clear result
+	
+	// TODO: Change reflective_present to check 'metallic' in the block's input_object 
 	if(reflective_present) {
 		//ADC_result = ((ADCH << 8) + ADCL);
-		ADC_result = ADCH;
+		//ADC_result = ADCH;
+		uint16_t low = ADCL;
+		uint16_t high = ADCH;
+		
+		//ADC_result = low;
+		
+		//PORTC = low;
+		
+		/*ADC_result = high;
+		ADC_result << 8;
+		ADC_result += low;	*/
+		//ADC_result = (high << 8) + low;
+		
+		ADC_result = (low ) + (high << 8 );
+		
 		if(ADC_result < ADC_lowest_val) ADC_lowest_val = ADC_result;
 		ADCSRA |= _BV(ADSC);
 	}
@@ -176,23 +228,47 @@ void init_motor() {
 }
 
 // Initialize the ADC when program starts
-void init_ADC(){	
+void init_ADC(){
+	ADC_result = 0xFFF;
+	ADC_lowest_val = 0xFFF;
+	reflective_present = 0;
+	item_ready = 0;
+	
+	// Voltage selection
+	ADMUX |= _BV(REFS0);
+	
+	// Input Channel 1
+	//ADMUX |= _BV(MUX0);
+	
+	// Prescaler
+	ADCSRA |= _BV(ADPS1);
+	ADCSRA |= _BV(ADPS0);
+	
+	// Enable Interrupt
+	ADCSRA |= _BV(ADIE);
+	
+	// Enable ADC
+	ADCSRA |= _BV(ADEN);
+	
+		
 	//initialize global variables
-	ADC_result = 0xFF;
-	ADC_lowest_val = 0xFF;
+	/*ADC_result = 0xFFF;
+	ADC_lowest_val = 0xFFF;
 	reflective_present = 0;
 	item_ready = 0;
 	
 	//configure external interrupts
-	EIMSK |= (_BV(INT2)); //enable INT2
-	EICRA = 0x10;
+	//EIMSK |= (_BV(INT2)); //enable INT2
+	//EICRA = 0x10;
 	//EICRA |= ~(_BV(ISC21) | _BV(ISC20)); //edge triggered interrupts
 	
 	//configure the ADC
 	//by default ADC analog input set to ADC0/PORTF0
 	ADCSRA |= _BV(ADEN);  //enable ADC
 	ADCSRA |= _BV(ADIE);  //enable interrupts for ADC
-	ADMUX  |= (_BV(ADLAR) | _BV(REFS0)); // left adjust ADC result, use AVcc as voltage ref, with ext. capacitor on AREF pin
+	//ADCSRA |= _BV(ADPS1) | _BV(ADPS0);	// Prescaler = 8 so we can measure all 10 bits		// !!!!**** TEST
+	//ADMUX  |= (_BV(ADLAR) | _BV(REFS0)); // left adjust ADC result, use AVcc as voltage ref, with ext. capacitor on AREF pin
+	ADMUX |= _BV(REFS0) | _BV(MUX0);	*/
 	
 }//init_ADC
 
@@ -228,6 +304,7 @@ void mTimer(int count)
 	}
 	return;
 }//mTimer
+
 
 int button_pressed(){
 	if((PINA & WAIT) == WAIT) return 0;
@@ -337,8 +414,28 @@ void classify_item(queue* q, uint16_t** v){
 	q->head->stage = 3;
 }//classify_part
 
+void display_reflective_reading(uint16_t value) {
+	// Clear upper bits in PD2 and PD5
+	PORTD &= 0x0F;	// Clear PORTD LEDs and preserve sensor inputs
+	
+	// Get 10 bits from reading
+	value &= SENSOR_READING_MASK;
+	
+	// Send lower 8 bits to LEDs (PORTC)
+	PORTC = value;
+	
+	// Send bit 8 and 9 from counter to PORTD leds
+	uint8_t temp = 0;
+	temp = ((value & 0x100) >> 4) + ((value & 0x200) >> 2);
+	
+	// testing 1 - test temp
+	//PORTC = temp;
+	PORTD |= temp;
+}
+
+
 //Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
-void ADC_calibrate(uint16_t cal_vals_final[4][4]){
+void ADC_calibrate(){
 	
 	int i,j,k;
 	uint16_t cal_vals[10];
@@ -351,13 +448,21 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		for(i=0;i<10;i++)
 		{
 			while(!item_ready) {}
+			
+			// testing
 			PORTC = (char)(i+1);
 			//PORTC = ADC_lowest_val;
+			//display_reflective_reading(ADC_lowest_val);
+			
 			cal_vals[i] = ADC_lowest_val;
-			ADC_lowest_val = 0xFF;
+			ADC_lowest_val = 0xFFFF;
 			item_ready = 0;
 		}
 		PORTC = 0xFF; //signal that all 10 values have been read
+		
+		// testing
+		update_motor_speed(0);
+		
 		mTimer(100);
 		// calculate the minimum, maximum, median, and mean of the 10 values
 		min = cal_vals[0];
@@ -384,8 +489,10 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		cal_vals_final[j][2] = med;
 		cal_vals_final[j][3] = avg;
 		
+		
+		
 		// display the results for the part
-		PORTC = j;
+	/*	PORTC = j;
 		mTimer(1000);
 		PORTC = min & 0xFF00;
 		mTimer(1000);
@@ -394,29 +501,35 @@ void ADC_calibrate(uint16_t cal_vals_final[4][4]){
 		PORTC = med & 0xFF00;
 		mTimer(1000);
 		PORTC = avg & 0xFF00;
-		mTimer(1000);
+		mTimer(1000);	*/
 		
 		// 1: min, 2: max, 3: med, 4: avg
 		// TODO: cycle display until button pressed and then move on to next part?
 		PORTC = 0x01;
 		mTimer(100);
-		PORTC = min;
+		//PORTC = min;
+		display_reflective_reading(min);
 		mTimer(500);
 
 		PORTC = 0x02;
 		mTimer(100);
-		PORTC = max;
+		//PORTC = max;
+		display_reflective_reading(max);
 		mTimer(500);
 
 		PORTC = 0x03;
 		mTimer(100);
-		PORTC = med;
+		//PORTC = med;
+		display_reflective_reading(med);
 		mTimer(500);
 
 		PORTC = 0x04;
 		mTimer(100);
-		PORTC = avg;
+		//PORTC = avg;
+		display_reflective_reading(avg);
 		mTimer(500);
+		
+		update_motor_speed(MOTOR_SPEED);
 	}
 }//ADC_calibrate
 
@@ -446,8 +559,8 @@ int main(void)
 
 	// Calibrate ADC before program starts
 	//CHECK: is the array passed by reference? Should a struct be used instead?
-	uint16_t calibration_values[4][4];
-	//ADC_calibrate(calibration_values);
+	//uint16_t calibration_values[4][4];	<- Need to access this from interrupts so make it global
+	//ADC_calibrate();
 
 		
 	// Main Program
