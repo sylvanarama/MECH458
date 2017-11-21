@@ -43,7 +43,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0XFA	//0x70
+#define MOTOR_SPEED				0XE0	//0x70
 
 // Stepper
 #define STEP1 0x35
@@ -98,7 +98,8 @@ ISR(TIMER0_COMPA_vect){
 // Optical Sensor 1 (PD0)
 ISR(INT0_vect){
 	// testing
-	display_reflective_reading(0);
+	//display_reflective_reading(0);
+	//ADC_lowest_val = 0xFFF;
 	//PORTC = 0x10;
 }
 
@@ -136,8 +137,8 @@ ISR(INT2_vect){
 ISR(INT3_vect){
 	// testing
 	//PORTC |= 0x80;
-	display_reflective_reading(ADC_result);
-	ADC_lowest_val = 0xFFF;
+	//display_reflective_reading(ADC_lowest_val);
+	//ADC_lowest_val = 0xFFF;
 }
 
 
@@ -153,15 +154,6 @@ ISR(ADC_vect)
 		//ADC_result = ADCH;
 		uint16_t low = ADCL;
 		uint16_t high = ADCH;
-		
-		//ADC_result = low;
-		
-		//PORTC = low;
-		
-		/*ADC_result = high;
-		ADC_result << 8;
-		ADC_result += low;	*/
-		//ADC_result = (high << 8) + low;
 		
 		ADC_result = (low ) + (high << 8 );
 		
@@ -237,8 +229,9 @@ void init_ADC(){
 	// Voltage selection
 	ADMUX |= _BV(REFS0);
 	
-	// Input Channel 1
-	//ADMUX |= _BV(MUX0);
+	// Channel 0 gives consistent results with what's expected
+		// Black has a high reflectivity and aluminum has the lowest. 
+		// All values are differentiable
 	
 	// Prescaler
 	ADCSRA |= _BV(ADPS1);
@@ -440,7 +433,6 @@ void ADC_calibrate(){
 	int i,j,k;
 	uint16_t cal_vals[10];
 	uint16_t min, max, med, avg;
-	//PORTC = 0xFF;
 	
 	for(j=0;j<4;j++)
 	{
@@ -509,25 +501,25 @@ void ADC_calibrate(){
 		mTimer(100);
 		//PORTC = min;
 		display_reflective_reading(min);
-		mTimer(500);
+		mTimer(1000);
 
 		PORTC = 0x02;
 		mTimer(100);
 		//PORTC = max;
 		display_reflective_reading(max);
-		mTimer(500);
+		mTimer(1000);
 
 		PORTC = 0x03;
 		mTimer(100);
 		//PORTC = med;
 		display_reflective_reading(med);
-		mTimer(500);
+		mTimer(1000);
 
 		PORTC = 0x04;
 		mTimer(100);
 		//PORTC = avg;
 		display_reflective_reading(avg);
-		mTimer(500);
+		mTimer(1000);
 		
 		update_motor_speed(MOTOR_SPEED);
 	}
@@ -560,7 +552,7 @@ int main(void)
 	// Calibrate ADC before program starts
 	//CHECK: is the array passed by reference? Should a struct be used instead?
 	//uint16_t calibration_values[4][4];	<- Need to access this from interrupts so make it global
-	//ADC_calibrate();
+	ADC_calibrate();
 
 		
 	// Main Program
