@@ -69,10 +69,9 @@ typedef struct input_object {
 // Calibration
 
 volatile uint16_t cal_vals_final[4][4];	
-volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
- 
+//volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
+volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
 
-volatile uint16_t cal_vals_final[4][4];
 
 //Queue
 queue* itemList; 
@@ -111,7 +110,7 @@ ISR(INT0_vect){
 	newItem->stage = 1;
 	enqueue(itemList, newItem);
 	//Display queue length
-	PORTC = (uint8_t)size(itemList);
+	//PORTC = (uint8_t)size(itemList);
 	//PORTC |= 0x01;
 }
 
@@ -131,6 +130,7 @@ ISR(INT2_vect){
 		if(STATE == OPERATIONAL)
 		{
 			itemList->head->reflective = ADC_lowest_val;
+			ADC_lowest_val = 0x3FF;
 			itemList->head->stage = 2;
 			//PORTC |= 0x02;
 		}
@@ -150,7 +150,7 @@ ISR(INT3_vect){
 	//dequeue item, display queue size
 	item* sortedItem = dequeue(itemList);
 	deleteItem(sortedItem);
-	PORTC = (uint8_t)size(itemList);
+	//PORTC = (uint8_t)size(itemList);
 	//PORTC |= 0x04;
 }
 
@@ -393,24 +393,34 @@ void exit_sensor(queue* q, char* sorted_parts[5]){
 void classify_item(){
 	uint16_t r = itemList->head->reflective;
 	uint8_t m = itemList->head->metal;
-	uint8_t i = 0;
 	uint8_t type = 0;
-	uint16_t sm_diff = 0x3FF;
-	uint16_t diff = 0x3FF;
-	for(i=0;i<4;i++){
-		diff = abs(cal_vals_final[i][2] - r);
-		if(diff < sm_diff) 
-		{
-			sm_diff = diff;	
-			type = (i+1);
-		}
+	uint16_t diff_white;
+	uint16_t diff_black;
+	uint16_t diff_steel;
+	uint16_t diff_aluminum;
+
+	if(m == 0)
+	{
+		diff_white = abs(calibration_vals[0] - r);
+		diff_black = abs(calibration_vals[1] - r);
+		if(diff_white < diff_black) type = 1;
+		else type = 2;
 	}
-	if((type == 1) && (m == 0)) itemList->head->type = type; //white
-	if((type == 2) && (m == 0)) itemList->head->type = type; //black 
-	if((type == 3) && (m == 1)) itemList->head->type = type; //aluminum
-	if((type == 4) && (m == 1)) itemList->head->type = type; //steel
-	else itemList->head->type = 0; //unknown type
+	
+	if(m == 1)
+	{
+		diff_aluminum = abs(calibration_vals[2] - r);
+		diff_steel = abs(calibration_vals[3] - r);
+		if(diff_aluminum < diff_steel) type = 3;
+		else type = 4;
+	}	 
+	itemList->head->type = type; 
 	itemList->head->stage = 3;
+	
+	//TESTING	
+	PORTC = type;
+	mTimer(3000);
+		
 }//classify_item
 
 void display_reflective_reading(uint16_t value) {
@@ -539,7 +549,7 @@ int main(void)
 	init_timer0_pwm();
 	init_motor();
 	init_interrupts();
-	//init_stepper();
+	init_stepper();
 	sei();
 
 	// Calibrate ADC before program starts
@@ -554,6 +564,7 @@ int main(void)
 	{
 		if(item_ready)
 		{
+			item_ready = 0;
 			classify_item();
 		}
 	}//while
