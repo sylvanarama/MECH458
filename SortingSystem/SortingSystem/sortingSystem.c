@@ -67,17 +67,16 @@ typedef struct input_object {
 
 //##############GLOBAL VARIABLES##############//
 // Calibration
-<<<<<<< HEAD
+
 volatile uint16_t cal_vals_final[4][4];	
 volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
  
-=======
+
 volatile uint16_t cal_vals_final[4][4];
 
 //Queue
 queue* itemList; 
 
->>>>>>> 108882ae264585e15cf7d9d436ded68868990f2b
 // ADC variables
 volatile uint16_t ADC_result;
 volatile uint16_t ADC_lowest_val;
@@ -105,13 +104,7 @@ ISR(TIMER0_COMPA_vect){
 }
 
 // Optical Sensor 1 (PD0)
-<<<<<<< HEAD
-ISR(INT0_vect){
-	// testing
-	//display_reflective_reading(0);
-	//ADC_lowest_val = 0x3FF;
-	//PORTC = 0x10;
-=======
+
 ISR(INT0_vect){	
 
 	//Add a new item to the queue
@@ -120,7 +113,6 @@ ISR(INT0_vect){
 	enqueue(itemList, newItem);
 	//Display queue length
 	PORTC = (uint8_t)size(itemList);
->>>>>>> 108882ae264585e15cf7d9d436ded68868990f2b
 }
 
 // Ferromagnetic Sensor (PD1)
@@ -169,30 +161,21 @@ ISR(INT3_vect){
 	// testing
 	//PORTC |= 0x80;
 	//display_reflective_reading(ADC_lowest_val);
-<<<<<<< HEAD
-	//ADC_lowest_val = 0x3FF;
-=======
 	//ADC_lowest_val = 0xFFF;
 	
 	//dequeue item, display queue size
 	item* sortedItem = dequeue(itemList);
 	deleteItem(sortedItem);
 	PORTC = (uint8_t)size(itemList);
->>>>>>> 108882ae264585e15cf7d9d436ded68868990f2b
 }
 
 
 //Interrupt when ADC finished
 ISR(ADC_vect)
 {
-<<<<<<< HEAD
-	if(reflective_present) {
-		//ADC_result = ((ADCH << 8) + ADCL);
-		//ADC_result = ADCH;
-=======
+
 	if(reflective_present) 
 	{
->>>>>>> 108882ae264585e15cf7d9d436ded68868990f2b
 		uint16_t low = ADCL;
 		uint16_t high = ADCH;
 		
@@ -564,13 +547,8 @@ int main(void)
 	sei();
 
 	// Calibrate ADC before program starts
-<<<<<<< HEAD
-	//CHECK: is the array passed by reference? Should a struct be used instead?
-	//uint16_t calibration_values[4][4];	<- Need to access this from interrupts so make it global
-	// ADC_calibrate();
-=======
+
 	//ADC_calibrate();
->>>>>>> 108882ae264585e15cf7d9d436ded68868990f2b
 
 	itemList = initQueue();
 	STATE = OPERATIONAL;
