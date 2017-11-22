@@ -43,7 +43,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0XE0	//0x70
+#define MOTOR_SPEED				0x70	//0XE0	
 
 // Stepper
 #define STEP1 0x35
@@ -100,21 +100,17 @@ ISR(TIMER0_COMPA_vect){
 
 // Optical Sensor 1 (PD0)
 ISR(INT0_vect){	
-
 	//Add a new item to the queue
 	item* newItem = initItem();
 	newItem->stage = 1;
 	enqueue(itemList, newItem);
 	//Display queue length
 	PORTC = (uint8_t)size(itemList);
+	//PORTC |= 0x01;
 }
 
 // Ferromagnetic Sensor (PD1)
 ISR(INT1_vect){
-	// testing
-	//PORTC |= 0x20;
-	//PORTC = PIND;
-	
 	//Display that the interrupt has fired
 	PORTC |= 0x80;
 	//If this interrupt fires, then the object is metal
@@ -123,10 +119,6 @@ ISR(INT1_vect){
 
 //Optical Sensor for ADC, edge triggered (PD2)
 ISR(INT2_vect){
-	// testing
-	//PORTC |= 0x40;
-	//PORTC = PIND;
-	
 	//object exiting reflective sensor zone, item ready to be classified
 	if(reflective_present) 
 	{	
@@ -134,13 +126,10 @@ ISR(INT2_vect){
 		{
 			itemList->head->reflective = ADC_lowest_val;
 			itemList->head->stage = 2;
-			PORTC = (uint8_t)size(itemList);
+			//PORTC |= 0x02;
 		}
 		reflective_present = 0;
 		item_ready = 1;
-		
-		// testing
-		//display_reflective_reading(ADC_result);
 	}
 	// object entering the reflective sensor zone, start ADC conversion
 	else
@@ -152,15 +141,11 @@ ISR(INT2_vect){
 
 // Optical sensor - exit position (PD3)
 ISR(INT3_vect){
-	// testing
-	//PORTC |= 0x80;
-	//display_reflective_reading(ADC_lowest_val);
-	//ADC_lowest_val = 0xFFF;
-	
 	//dequeue item, display queue size
 	item* sortedItem = dequeue(itemList);
 	deleteItem(sortedItem);
 	PORTC = (uint8_t)size(itemList);
+	//PORTC |= 0x04;
 }
 
 
@@ -313,7 +298,6 @@ void mTimer(int count)
 	return;
 }//mTimer
 
-
 int button_pressed(){
 	if((PINA & WAIT) == WAIT) return 0;
 	if((PINA & WAIT) != WAIT) {
@@ -399,16 +383,28 @@ void exit_sensor(queue* q, char* sorted_parts[5]){
 	*(sorted_parts[type])++;
 }//exit_sensor
 
-void classify_item(queue* q, uint16_t** v){
-	uint16_t r = q->head->reflective;
-	uint16_t m = q->head->metal;
-	if((v[0][0] < r)  && (r < v[0][1]) && (m == 0)) q->head->type = 1; // white
-	if((v[1][0] < r)  && (r < v[1][1]) && (m == 0)) q->head->type = 2; // black
-	if((v[2][0] < r)  && (r < v[2][1]) && (m == 1)) q->head->type = 3; // aluminum
-	if((v[3][0] < r)  && (r < v[3][1]) && (m == 1)) q->head->type = 4; // steel
-	else q->head->type = 0; //unknown type
-	q->head->stage = 3;
-}//classify_part
+void classify_item(){
+	uint16_t r = itemList->head->reflective;
+	uint8_t m = itemList->head->metal;
+	uint8_t i = 0;
+	uint8_t type = 0;
+	uint16_t sm_diff = 0x3FF;
+	uint16_t diff = 0x3FF;
+	for(i=0;i<4;i++){
+		diff = abs(cal_vals_final[i][2] - r);
+		if(diff < sm_diff) 
+		{
+			sm_diff = diff;	
+			type = (i+1);
+		}
+	}
+	if((type == 1) && (m == 0)) itemList->head->type = type; //white
+	if((type == 2) && (m == 0)) itemList->head->type = type; //black 
+	if((type == 3) && (m == 1)) itemList->head->type = type; //aluminum
+	if((type == 4) && (m == 1)) itemList->head->type = type; //steel
+	else itemList->head->type = 0; //unknown type
+	itemList->head->stage = 3;
+}//classify_item
 
 void display_reflective_reading(uint16_t value) {
 	// Clear upper bits in PD2 and PD5
@@ -548,7 +544,10 @@ int main(void)
 	// Main Program
 	while (1)
 	{
-		
+		if(item_ready)
+		{
+			classify_item();
+		}
 	}//while
 	return 0;
 }//main
