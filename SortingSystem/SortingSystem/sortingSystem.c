@@ -67,8 +67,9 @@ typedef struct input_object {
 
 //##############GLOBAL VARIABLES##############//
 // Calibration
-volatile uint16_t cal_vals_final[4][4];
-
+volatile uint16_t cal_vals_final[4][4];	
+volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
+ 
 // ADC variables
 volatile uint16_t ADC_result;
 volatile uint16_t ADC_lowest_val;
@@ -99,7 +100,7 @@ ISR(TIMER0_COMPA_vect){
 ISR(INT0_vect){
 	// testing
 	//display_reflective_reading(0);
-	//ADC_lowest_val = 0xFFF;
+	//ADC_lowest_val = 0x3FF;
 	//PORTC = 0x10;
 }
 
@@ -138,17 +139,13 @@ ISR(INT3_vect){
 	// testing
 	//PORTC |= 0x80;
 	//display_reflective_reading(ADC_lowest_val);
-	//ADC_lowest_val = 0xFFF;
+	//ADC_lowest_val = 0x3FF;
 }
 
 
 //Interrupt when ADC finished
 ISR(ADC_vect)
 {
-	
-	//ADC_result = 0;	// Clear result
-	
-	// TODO: Change reflective_present to check 'metallic' in the block's input_object 
 	if(reflective_present) {
 		//ADC_result = ((ADCH << 8) + ADCL);
 		//ADC_result = ADCH;
@@ -221,8 +218,8 @@ void init_motor() {
 
 // Initialize the ADC when program starts
 void init_ADC(){
-	ADC_result = 0xFFF;
-	ADC_lowest_val = 0xFFF;
+	ADC_result = 0x3FF;
+	ADC_lowest_val = 0x3FF;
 	reflective_present = 0;
 	item_ready = 0;
 	
@@ -282,7 +279,7 @@ void mTimer(int count)
 	TCCR1B |= _BV(WGM12);	// Set WGM bits to 0100, see pg 142
 	OCR1A = 0x03E8;			// Set output compare register for 1000 cycles  = 1ms
 	TCNT1 = 0x0000;			// Set initial value of Timer Counter to 0x000
-	TIMSK1 |= 0b00000010;   // Output compare interrupt enable
+	//TIMSK1 |= 0b00000010;   // Output compare interrupt enable
 	TIFR1 |= _BV(OCF1A);	// Clear timer interrupt flag and begin timer
 	
 	// Poll the timer to determine when the timer has reached 0x03E8
@@ -447,7 +444,7 @@ void ADC_calibrate(){
 			//display_reflective_reading(ADC_lowest_val);
 			
 			cal_vals[i] = ADC_lowest_val;
-			ADC_lowest_val = 0xFFFF;
+			ADC_lowest_val = 0x3FF;
 			item_ready = 0;
 		}
 		PORTC = 0xFF; //signal that all 10 values have been read
@@ -462,7 +459,7 @@ void ADC_calibrate(){
 		avg = cal_vals[0];
 		for(k=1;k<10;k++)
 		{
-			if(cal_vals[k] > max) max = cal_vals[k];
+			if((cal_vals[k] > max) && (cal_vals[k] != 0x3FF)) max = cal_vals[k];
 			if(cal_vals[k] < min) min = cal_vals[k];
 			avg += cal_vals[k];
 		}
@@ -498,28 +495,28 @@ void ADC_calibrate(){
 		// 1: min, 2: max, 3: med, 4: avg
 		// TODO: cycle display until button pressed and then move on to next part?
 		PORTC = 0x01;
-		mTimer(100);
+		mTimer(1000);
 		//PORTC = min;
 		display_reflective_reading(min);
-		mTimer(1000);
+		mTimer(7000);
 
 		PORTC = 0x02;
-		mTimer(100);
+		mTimer(1000);
 		//PORTC = max;
 		display_reflective_reading(max);
-		mTimer(1000);
+		mTimer(7000);
 
 		PORTC = 0x03;
-		mTimer(100);
+		mTimer(1000);
 		//PORTC = med;
 		display_reflective_reading(med);
-		mTimer(1000);
+		mTimer(7000);
 
 		PORTC = 0x04;
-		mTimer(100);
+		mTimer(1000);
 		//PORTC = avg;
 		display_reflective_reading(avg);
-		mTimer(1000);
+		mTimer(7000);
 		
 		update_motor_speed(MOTOR_SPEED);
 	}
@@ -552,7 +549,7 @@ int main(void)
 	// Calibrate ADC before program starts
 	//CHECK: is the array passed by reference? Should a struct be used instead?
 	//uint16_t calibration_values[4][4];	<- Need to access this from interrupts so make it global
-	ADC_calibrate();
+	// ADC_calibrate();
 
 		
 	// Main Program

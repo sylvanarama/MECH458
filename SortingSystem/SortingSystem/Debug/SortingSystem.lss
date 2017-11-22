@@ -3,31 +3,31 @@ SortingSystem.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00800100  0000053c  2**0
+  0 .data         00000000  00800100  00800100  00000312  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         000004c8  00000000  00000000  00000074  2**1
+  1 .text         0000029e  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          0000002e  00800100  00800100  0000053c  2**0
+  2 .bss          0000002e  00800100  00800100  00000312  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  0000053c  2**0
+  3 .comment      00000030  00000000  00000000  00000312  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  0000056c  2**2
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000344  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 000000e0  00000000  00000000  000005ac  2**0
+  5 .debug_aranges 000000e0  00000000  00000000  00000384  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00001543  00000000  00000000  0000068c  2**0
+  6 .debug_info   00001565  00000000  00000000  00000464  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000d6e  00000000  00000000  00001bcf  2**0
+  7 .debug_abbrev 00000d6e  00000000  00000000  000019c9  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   000009d0  00000000  00000000  0000293d  2**0
+  8 .debug_line   000009d6  00000000  00000000  00002737  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  00000308  00000000  00000000  00003310  2**2
+  9 .debug_frame  00000308  00000000  00000000  00003110  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000007c0  00000000  00000000  00003618  2**0
+ 10 .debug_str    000007d1  00000000  00000000  00003418  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    000009a8  00000000  00000000  00003dd8  2**0
+ 11 .debug_loc    000009a8  00000000  00000000  00003be9  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 000000d0  00000000  00000000  00004780  2**0
+ 12 .debug_ranges 000000d0  00000000  00000000  00004591  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -122,8 +122,8 @@ Disassembly of section .text:
   a4:	11 e0       	ldi	r17, 0x01	; 1
   a6:	a0 e0       	ldi	r26, 0x00	; 0
   a8:	b1 e0       	ldi	r27, 0x01	; 1
-  aa:	e8 ec       	ldi	r30, 0xC8	; 200
-  ac:	f4 e0       	ldi	r31, 0x04	; 4
+  aa:	ee e9       	ldi	r30, 0x9E	; 158
+  ac:	f2 e0       	ldi	r31, 0x02	; 2
   ae:	00 e0       	ldi	r16, 0x00	; 0
   b0:	0b bf       	out	0x3b, r16	; 59
   b2:	02 c0       	rjmp	.+4      	; 0xb8 <__do_copy_data+0x14>
@@ -146,19 +146,19 @@ Disassembly of section .text:
   c8:	ae 32       	cpi	r26, 0x2E	; 46
   ca:	b2 07       	cpc	r27, r18
   cc:	e1 f7       	brne	.-8      	; 0xc6 <.do_clear_bss_loop>
-  ce:	d9 d1       	rcall	.+946    	; 0x482 <main>
-  d0:	f9 c1       	rjmp	.+1010   	; 0x4c4 <_exit>
+  ce:	d4 d0       	rcall	.+424    	; 0x278 <main>
+  d0:	e4 c0       	rjmp	.+456    	; 0x29a <_exit>
 
 000000d2 <__bad_interrupt>:
   d2:	91 c0       	rjmp	.+290    	; 0x1f6 <__vector_default>
 
 000000d4 <__vector_21>:
-	if((v[1][0] < r)  && (r < v[1][1]) && (m == 0)) q->head->type = 2; // black
-	if((v[2][0] < r)  && (r < v[2][1]) && (m == 1)) q->head->type = 3; // aluminum
-	if((v[3][0] < r)  && (r < v[3][1]) && (m == 1)) q->head->type = 4; // steel
-	else q->head->type = 0; //unknown type
-	q->head->stage = 3;
-}//classify_part
+		display_reflective_reading(avg);
+		mTimer(7000);
+		
+		update_motor_speed(MOTOR_SPEED);
+	}
+}//ADC_calibrate
   d4:	1f 92       	push	r1
   d6:	0f 92       	push	r0
   d8:	0f b6       	in	r0, 0x3f	; 63
@@ -338,7 +338,7 @@ Disassembly of section .text:
 
 00000234 <init_ADC>:
  234:	8f ef       	ldi	r24, 0xFF	; 255
- 236:	9f e0       	ldi	r25, 0x0F	; 15
+ 236:	93 e0       	ldi	r25, 0x03	; 3
  238:	90 93 01 01 	sts	0x0101, r25	; 0x800101 <__data_end+0x1>
  23c:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_end>
  240:	90 93 2a 01 	sts	0x012A, r25	; 0x80012a <ADC_lowest_val+0x1>
@@ -366,500 +366,50 @@ Disassembly of section .text:
  274:	80 83       	st	Z, r24
  276:	08 95       	ret
 
-00000278 <mTimer>:
- 278:	ac 01       	movw	r20, r24
- 27a:	e1 e8       	ldi	r30, 0x81	; 129
- 27c:	f0 e0       	ldi	r31, 0x00	; 0
- 27e:	90 81       	ld	r25, Z
- 280:	91 60       	ori	r25, 0x01	; 1
- 282:	90 83       	st	Z, r25
- 284:	90 81       	ld	r25, Z
- 286:	98 60       	ori	r25, 0x08	; 8
- 288:	90 83       	st	Z, r25
- 28a:	88 ee       	ldi	r24, 0xE8	; 232
- 28c:	93 e0       	ldi	r25, 0x03	; 3
- 28e:	90 93 89 00 	sts	0x0089, r25	; 0x800089 <__TEXT_REGION_LENGTH__+0x7e0089>
- 292:	80 93 88 00 	sts	0x0088, r24	; 0x800088 <__TEXT_REGION_LENGTH__+0x7e0088>
- 296:	10 92 85 00 	sts	0x0085, r1	; 0x800085 <__TEXT_REGION_LENGTH__+0x7e0085>
- 29a:	10 92 84 00 	sts	0x0084, r1	; 0x800084 <__TEXT_REGION_LENGTH__+0x7e0084>
- 29e:	ef e6       	ldi	r30, 0x6F	; 111
- 2a0:	f0 e0       	ldi	r31, 0x00	; 0
- 2a2:	90 81       	ld	r25, Z
- 2a4:	92 60       	ori	r25, 0x02	; 2
- 2a6:	90 83       	st	Z, r25
- 2a8:	b1 9a       	sbi	0x16, 1	; 22
- 2aa:	20 e0       	ldi	r18, 0x00	; 0
- 2ac:	30 e0       	ldi	r19, 0x00	; 0
- 2ae:	05 c0       	rjmp	.+10     	; 0x2ba <mTimer+0x42>
- 2b0:	b1 9b       	sbis	0x16, 1	; 22
- 2b2:	fe cf       	rjmp	.-4      	; 0x2b0 <mTimer+0x38>
- 2b4:	b1 9a       	sbi	0x16, 1	; 22
- 2b6:	2f 5f       	subi	r18, 0xFF	; 255
- 2b8:	3f 4f       	sbci	r19, 0xFF	; 255
- 2ba:	24 17       	cp	r18, r20
- 2bc:	35 07       	cpc	r19, r21
- 2be:	1c f4       	brge	.+6      	; 0x2c6 <mTimer+0x4e>
- 2c0:	b1 9b       	sbis	0x16, 1	; 22
- 2c2:	f6 cf       	rjmp	.-20     	; 0x2b0 <mTimer+0x38>
- 2c4:	f7 cf       	rjmp	.-18     	; 0x2b4 <mTimer+0x3c>
- 2c6:	08 95       	ret
-
-000002c8 <display_reflective_reading>:
-
-void display_reflective_reading(uint16_t value) {
-	// Clear upper bits in PD2 and PD5
-	PORTD &= 0x0F;	// Clear PORTD LEDs and preserve sensor inputs
- 2c8:	2b b1       	in	r18, 0x0b	; 11
- 2ca:	2f 70       	andi	r18, 0x0F	; 15
- 2cc:	2b b9       	out	0x0b, r18	; 11
-	
-	// Get 10 bits from reading
-	value &= SENSOR_READING_MASK;
-	
-	// Send lower 8 bits to LEDs (PORTC)
-	PORTC = value;
- 2ce:	9c 01       	movw	r18, r24
- 2d0:	33 70       	andi	r19, 0x03	; 3
- 2d2:	28 b9       	out	0x08, r18	; 8
-	uint8_t temp = 0;
-	temp = ((value & 0x100) >> 4) + ((value & 0x200) >> 2);
-	
-	// testing 1 - test temp
-	//PORTC = temp;
-	PORTD |= temp;
- 2d4:	2b b1       	in	r18, 0x0b	; 11
- 2d6:	ac 01       	movw	r20, r24
- 2d8:	44 27       	eor	r20, r20
- 2da:	51 70       	andi	r21, 0x01	; 1
- 2dc:	52 95       	swap	r21
- 2de:	42 95       	swap	r20
- 2e0:	4f 70       	andi	r20, 0x0F	; 15
- 2e2:	45 27       	eor	r20, r21
- 2e4:	5f 70       	andi	r21, 0x0F	; 15
- 2e6:	45 27       	eor	r20, r21
- 2e8:	88 27       	eor	r24, r24
- 2ea:	92 70       	andi	r25, 0x02	; 2
- 2ec:	96 95       	lsr	r25
- 2ee:	87 95       	ror	r24
- 2f0:	96 95       	lsr	r25
- 2f2:	87 95       	ror	r24
- 2f4:	84 0f       	add	r24, r20
- 2f6:	82 2b       	or	r24, r18
- 2f8:	8b b9       	out	0x0b, r24	; 11
- 2fa:	08 95       	ret
-
-000002fc <ADC_calibrate>:
-}
-
-
-//Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
-void ADC_calibrate(){
- 2fc:	2f 92       	push	r2
- 2fe:	3f 92       	push	r3
- 300:	4f 92       	push	r4
- 302:	5f 92       	push	r5
- 304:	6f 92       	push	r6
- 306:	7f 92       	push	r7
- 308:	8f 92       	push	r8
- 30a:	9f 92       	push	r9
- 30c:	af 92       	push	r10
- 30e:	bf 92       	push	r11
- 310:	cf 92       	push	r12
- 312:	df 92       	push	r13
- 314:	ef 92       	push	r14
- 316:	ff 92       	push	r15
- 318:	0f 93       	push	r16
- 31a:	1f 93       	push	r17
- 31c:	cf 93       	push	r28
- 31e:	df 93       	push	r29
- 320:	cd b7       	in	r28, 0x3d	; 61
- 322:	de b7       	in	r29, 0x3e	; 62
- 324:	64 97       	sbiw	r28, 0x14	; 20
- 326:	0f b6       	in	r0, 0x3f	; 63
- 328:	f8 94       	cli
- 32a:	de bf       	out	0x3e, r29	; 62
- 32c:	0f be       	out	0x3f, r0	; 63
- 32e:	cd bf       	out	0x3d, r28	; 61
-	
-	int i,j,k;
-	uint16_t cal_vals[10];
-	uint16_t min, max, med, avg;
-	
-	for(j=0;j<4;j++)
- 330:	81 2c       	mov	r8, r1
- 332:	91 2c       	mov	r9, r1
-			PORTC = (char)(i+1);
-			//PORTC = ADC_lowest_val;
-			//display_reflective_reading(ADC_lowest_val);
-			
-			cal_vals[i] = ADC_lowest_val;
-			ADC_lowest_val = 0xFFFF;
- 334:	cc 24       	eor	r12, r12
- 336:	ca 94       	dec	r12
- 338:	dc 2c       	mov	r13, r12
-			item_ready = 0;
-		}
-		PORTC = 0xFF; //signal that all 10 values have been read
- 33a:	22 24       	eor	r2, r2
- 33c:	2a 94       	dec	r2
- 33e:	5e 01       	movw	r10, r28
- 340:	85 e1       	ldi	r24, 0x15	; 21
- 342:	a8 0e       	add	r10, r24
- 344:	b1 1c       	adc	r11, r1
-		PORTC = avg & 0xFF00;
-		mTimer(1000);	*/
-		
-		// 1: min, 2: max, 3: med, 4: avg
-		// TODO: cycle display until button pressed and then move on to next part?
-		PORTC = 0x01;
- 346:	33 24       	eor	r3, r3
- 348:	33 94       	inc	r3
- 34a:	7e c0       	rjmp	.+252    	; 0x448 <__LOCK_REGION_LENGTH__+0x48>
-	for(j=0;j<4;j++)
-	{
-		// run part through 10 times, store the lowest value of each pass in an array
-		for(i=0;i<10;i++)
-		{
-			while(!item_ready) {}
- 34c:	80 91 06 01 	lds	r24, 0x0106	; 0x800106 <item_ready>
- 350:	88 23       	and	r24, r24
- 352:	e1 f3       	breq	.-8      	; 0x34c <ADC_calibrate+0x50>
-			
-			// testing
-			PORTC = (char)(i+1);
- 354:	98 b9       	out	0x08, r25	; 8
-			//PORTC = ADC_lowest_val;
-			//display_reflective_reading(ADC_lowest_val);
-			
-			cal_vals[i] = ADC_lowest_val;
- 356:	20 91 29 01 	lds	r18, 0x0129	; 0x800129 <ADC_lowest_val>
- 35a:	30 91 2a 01 	lds	r19, 0x012A	; 0x80012a <ADC_lowest_val+0x1>
- 35e:	21 93       	st	Z+, r18
- 360:	31 93       	st	Z+, r19
-			ADC_lowest_val = 0xFFFF;
- 362:	d0 92 2a 01 	sts	0x012A, r13	; 0x80012a <ADC_lowest_val+0x1>
- 366:	c0 92 29 01 	sts	0x0129, r12	; 0x800129 <ADC_lowest_val>
-			item_ready = 0;
- 36a:	10 92 06 01 	sts	0x0106, r1	; 0x800106 <item_ready>
- 36e:	9f 5f       	subi	r25, 0xFF	; 255
-	uint16_t min, max, med, avg;
-	
-	for(j=0;j<4;j++)
-	{
-		// run part through 10 times, store the lowest value of each pass in an array
-		for(i=0;i<10;i++)
- 370:	9b 30       	cpi	r25, 0x0B	; 11
- 372:	61 f7       	brne	.-40     	; 0x34c <ADC_calibrate+0x50>
-			
-			cal_vals[i] = ADC_lowest_val;
-			ADC_lowest_val = 0xFFFF;
-			item_ready = 0;
-		}
-		PORTC = 0xFF; //signal that all 10 values have been read
- 374:	28 b8       	out	0x08, r2	; 8
-	}
-	return 1;
-}//button_pressed
-
-void update_motor_speed(uint16_t speed){
-	OCR0A = speed;
- 376:	17 bc       	out	0x27, r1	; 39
-		PORTC = 0xFF; //signal that all 10 values have been read
-		
-		// testing
-		update_motor_speed(0);
-		
-		mTimer(100);
- 378:	84 e6       	ldi	r24, 0x64	; 100
- 37a:	90 e0       	ldi	r25, 0x00	; 0
- 37c:	7d df       	rcall	.-262    	; 0x278 <mTimer>
-		// calculate the minimum, maximum, median, and mean of the 10 values
-		min = cal_vals[0];
- 37e:	09 81       	ldd	r16, Y+1	; 0x01
- 380:	1a 81       	ldd	r17, Y+2	; 0x02
- 382:	fe 01       	movw	r30, r28
- 384:	33 96       	adiw	r30, 0x03	; 3
-		max = cal_vals[0];
-		avg = cal_vals[0];
- 386:	98 01       	movw	r18, r16
-		update_motor_speed(0);
-		
-		mTimer(100);
-		// calculate the minimum, maximum, median, and mean of the 10 values
-		min = cal_vals[0];
-		max = cal_vals[0];
- 388:	78 01       	movw	r14, r16
-		avg = cal_vals[0];
-		for(k=1;k<10;k++)
-		{
-			if(cal_vals[k] > max) max = cal_vals[k];
- 38a:	81 91       	ld	r24, Z+
- 38c:	91 91       	ld	r25, Z+
- 38e:	e8 16       	cp	r14, r24
- 390:	f9 06       	cpc	r15, r25
- 392:	08 f4       	brcc	.+2      	; 0x396 <ADC_calibrate+0x9a>
- 394:	7c 01       	movw	r14, r24
- 396:	80 17       	cp	r24, r16
- 398:	91 07       	cpc	r25, r17
- 39a:	08 f4       	brcc	.+2      	; 0x39e <ADC_calibrate+0xa2>
- 39c:	8c 01       	movw	r16, r24
-			if(cal_vals[k] < min) min = cal_vals[k];
-			avg += cal_vals[k];
- 39e:	28 0f       	add	r18, r24
- 3a0:	39 1f       	adc	r19, r25
-		mTimer(100);
-		// calculate the minimum, maximum, median, and mean of the 10 values
-		min = cal_vals[0];
-		max = cal_vals[0];
-		avg = cal_vals[0];
-		for(k=1;k<10;k++)
- 3a2:	ea 15       	cp	r30, r10
- 3a4:	fb 05       	cpc	r31, r11
- 3a6:	89 f7       	brne	.-30     	; 0x38a <ADC_calibrate+0x8e>
-		{
-			if(cal_vals[k] > max) max = cal_vals[k];
-			if(cal_vals[k] < min) min = cal_vals[k];
-			avg += cal_vals[k];
-		}
-		med = (min+max)/2;
- 3a8:	27 01       	movw	r4, r14
- 3aa:	40 0e       	add	r4, r16
- 3ac:	51 1e       	adc	r5, r17
- 3ae:	56 94       	lsr	r5
- 3b0:	47 94       	ror	r4
-		avg = avg/10;
- 3b2:	ad ec       	ldi	r26, 0xCD	; 205
- 3b4:	bc ec       	ldi	r27, 0xCC	; 204
- 3b6:	77 d0       	rcall	.+238    	; 0x4a6 <__umulhisi3>
- 3b8:	3c 01       	movw	r6, r24
- 3ba:	76 94       	lsr	r7
- 3bc:	67 94       	ror	r6
- 3be:	76 94       	lsr	r7
- 3c0:	67 94       	ror	r6
- 3c2:	76 94       	lsr	r7
- 3c4:	67 94       	ror	r6
-		// white    [0,0][0,1][0,2][0,3]
-		// black    [1,0][1,1][1,2][1,3]
-		// aluminum [2,0][2,1][2,2][2,3]
-		// steel    [3,0][3,1][3,2][3,3]
-		
-		cal_vals_final[j][0] = min;
- 3c6:	f4 01       	movw	r30, r8
- 3c8:	ee 0f       	add	r30, r30
- 3ca:	ff 1f       	adc	r31, r31
- 3cc:	ee 0f       	add	r30, r30
- 3ce:	ff 1f       	adc	r31, r31
- 3d0:	ee 0f       	add	r30, r30
- 3d2:	ff 1f       	adc	r31, r31
- 3d4:	e9 5f       	subi	r30, 0xF9	; 249
- 3d6:	fe 4f       	sbci	r31, 0xFE	; 254
- 3d8:	11 83       	std	Z+1, r17	; 0x01
- 3da:	00 83       	st	Z, r16
-		cal_vals_final[j][1] = max;
- 3dc:	f3 82       	std	Z+3, r15	; 0x03
- 3de:	e2 82       	std	Z+2, r14	; 0x02
-		cal_vals_final[j][2] = med;
- 3e0:	55 82       	std	Z+5, r5	; 0x05
- 3e2:	44 82       	std	Z+4, r4	; 0x04
-		cal_vals_final[j][3] = avg;
- 3e4:	77 82       	std	Z+7, r7	; 0x07
- 3e6:	66 82       	std	Z+6, r6	; 0x06
-		mTimer(1000);	*/
-		
-		// 1: min, 2: max, 3: med, 4: avg
-		// TODO: cycle display until button pressed and then move on to next part?
-		PORTC = 0x01;
-		mTimer(100);
- 3e8:	38 b8       	out	0x08, r3	; 8
- 3ea:	84 e6       	ldi	r24, 0x64	; 100
-		//PORTC = min;
-		display_reflective_reading(min);
- 3ec:	90 e0       	ldi	r25, 0x00	; 0
- 3ee:	44 df       	rcall	.-376    	; 0x278 <mTimer>
-		mTimer(1000);
- 3f0:	c8 01       	movw	r24, r16
- 3f2:	6a df       	rcall	.-300    	; 0x2c8 <display_reflective_reading>
- 3f4:	88 ee       	ldi	r24, 0xE8	; 232
-
-		PORTC = 0x02;
- 3f6:	93 e0       	ldi	r25, 0x03	; 3
-		mTimer(100);
- 3f8:	3f df       	rcall	.-386    	; 0x278 <mTimer>
- 3fa:	82 e0       	ldi	r24, 0x02	; 2
- 3fc:	88 b9       	out	0x08, r24	; 8
-		//PORTC = max;
-		display_reflective_reading(max);
- 3fe:	84 e6       	ldi	r24, 0x64	; 100
- 400:	90 e0       	ldi	r25, 0x00	; 0
-		mTimer(1000);
- 402:	3a df       	rcall	.-396    	; 0x278 <mTimer>
- 404:	c7 01       	movw	r24, r14
-
-		PORTC = 0x03;
- 406:	60 df       	rcall	.-320    	; 0x2c8 <display_reflective_reading>
-		mTimer(100);
- 408:	88 ee       	ldi	r24, 0xE8	; 232
- 40a:	93 e0       	ldi	r25, 0x03	; 3
- 40c:	35 df       	rcall	.-406    	; 0x278 <mTimer>
-		//PORTC = med;
-		display_reflective_reading(med);
- 40e:	83 e0       	ldi	r24, 0x03	; 3
-		mTimer(1000);
- 410:	88 b9       	out	0x08, r24	; 8
- 412:	84 e6       	ldi	r24, 0x64	; 100
- 414:	90 e0       	ldi	r25, 0x00	; 0
-
-		PORTC = 0x04;
- 416:	30 df       	rcall	.-416    	; 0x278 <mTimer>
- 418:	c2 01       	movw	r24, r4
-		mTimer(100);
- 41a:	56 df       	rcall	.-340    	; 0x2c8 <display_reflective_reading>
- 41c:	88 ee       	ldi	r24, 0xE8	; 232
- 41e:	93 e0       	ldi	r25, 0x03	; 3
- 420:	2b df       	rcall	.-426    	; 0x278 <mTimer>
-		//PORTC = avg;
-		display_reflective_reading(avg);
- 422:	84 e0       	ldi	r24, 0x04	; 4
- 424:	88 b9       	out	0x08, r24	; 8
- 426:	84 e6       	ldi	r24, 0x64	; 100
-		mTimer(1000);
- 428:	90 e0       	ldi	r25, 0x00	; 0
- 42a:	26 df       	rcall	.-436    	; 0x278 <mTimer>
- 42c:	c3 01       	movw	r24, r6
- 42e:	4c df       	rcall	.-360    	; 0x2c8 <display_reflective_reading>
-	}
-	return 1;
-}//button_pressed
-
-void update_motor_speed(uint16_t speed){
-	OCR0A = speed;
- 430:	88 ee       	ldi	r24, 0xE8	; 232
- 432:	93 e0       	ldi	r25, 0x03	; 3
-	
-	int i,j,k;
-	uint16_t cal_vals[10];
-	uint16_t min, max, med, avg;
-	
-	for(j=0;j<4;j++)
- 434:	21 df       	rcall	.-446    	; 0x278 <mTimer>
- 436:	80 ee       	ldi	r24, 0xE0	; 224
- 438:	87 bd       	out	0x27, r24	; 39
- 43a:	8f ef       	ldi	r24, 0xFF	; 255
- 43c:	88 1a       	sub	r8, r24
- 43e:	98 0a       	sbc	r9, r24
- 440:	84 e0       	ldi	r24, 0x04	; 4
- 442:	88 16       	cp	r8, r24
- 444:	91 04       	cpc	r9, r1
-	PORTD |= temp;
-}
-
-
-//Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
-void ADC_calibrate(){
- 446:	21 f0       	breq	.+8      	; 0x450 <__LOCK_REGION_LENGTH__+0x50>
- 448:	fe 01       	movw	r30, r28
-		display_reflective_reading(avg);
-		mTimer(1000);
-		
-		update_motor_speed(MOTOR_SPEED);
-	}
-}//ADC_calibrate
- 44a:	31 96       	adiw	r30, 0x01	; 1
- 44c:	91 e0       	ldi	r25, 0x01	; 1
- 44e:	7e cf       	rjmp	.-260    	; 0x34c <ADC_calibrate+0x50>
- 450:	64 96       	adiw	r28, 0x14	; 20
- 452:	0f b6       	in	r0, 0x3f	; 63
- 454:	f8 94       	cli
- 456:	de bf       	out	0x3e, r29	; 62
- 458:	0f be       	out	0x3f, r0	; 63
- 45a:	cd bf       	out	0x3d, r28	; 61
- 45c:	df 91       	pop	r29
- 45e:	cf 91       	pop	r28
- 460:	1f 91       	pop	r17
- 462:	0f 91       	pop	r16
- 464:	ff 90       	pop	r15
- 466:	ef 90       	pop	r14
- 468:	df 90       	pop	r13
- 46a:	cf 90       	pop	r12
- 46c:	bf 90       	pop	r11
- 46e:	af 90       	pop	r10
- 470:	9f 90       	pop	r9
- 472:	8f 90       	pop	r8
- 474:	7f 90       	pop	r7
- 476:	6f 90       	pop	r6
- 478:	5f 90       	pop	r5
- 47a:	4f 90       	pop	r4
- 47c:	3f 90       	pop	r3
- 47e:	2f 90       	pop	r2
- 480:	08 95       	ret
-
-00000482 <main>:
+00000278 <main>:
 //##############	Main Program	##############//
 
 int main(void)
 {
 	// Init port directions
 	DDRA = 0x00;		// Port A all inputs (button and switch)
- 482:	11 b8       	out	0x01, r1	; 1
+ 278:	11 b8       	out	0x01, r1	; 1
 	DDRB = 0x8F;		// PB7 = output for PWM signal
- 484:	8f e8       	ldi	r24, 0x8F	; 143
- 486:	84 b9       	out	0x04, r24	; 4
+ 27a:	8f e8       	ldi	r24, 0x8F	; 143
+ 27c:	84 b9       	out	0x04, r24	; 4
 						// PB3:0 = output for motor
 	DDRC = 0xFF;		// Port C all output (LEDs)
- 488:	8f ef       	ldi	r24, 0xFF	; 255
- 48a:	87 b9       	out	0x07, r24	; 7
+ 27e:	8f ef       	ldi	r24, 0xFF	; 255
+ 280:	87 b9       	out	0x07, r24	; 7
 	DDRD = 0xF0;		// Port D 3:0 = sensor input (External Interrupts)
- 48c:	80 ef       	ldi	r24, 0xF0	; 240
- 48e:	8a b9       	out	0x0a, r24	; 10
+ 282:	80 ef       	ldi	r24, 0xF0	; 240
+ 284:	8a b9       	out	0x0a, r24	; 10
 	DDRE = 0x00;		// Port E input (buttons/interrupts)
- 490:	1d b8       	out	0x0d, r1	; 13
+ 286:	1d b8       	out	0x0d, r1	; 13
 	DDRF = 0x00;		// Port F input (ADC and ?)
- 492:	10 ba       	out	0x10, r1	; 16
+ 288:	10 ba       	out	0x10, r1	; 16
 	
 	PORTC = 0x00;
- 494:	18 b8       	out	0x08, r1	; 8
+ 28a:	18 b8       	out	0x08, r1	; 8
 	
 	// Initialize Peripherals
 	cli();
 	init_ADC();
 	init_timer0_pwm();
 	init_motor();
- 496:	f8 94       	cli
+ 28c:	f8 94       	cli
+ 28e:	d2 df       	rcall	.-92     	; 0x234 <init_ADC>
 	init_interrupts();
- 498:	cd de       	rcall	.-614    	; 0x234 <init_ADC>
- 49a:	be de       	rcall	.-644    	; 0x218 <init_timer0_pwm>
+ 290:	c3 df       	rcall	.-122    	; 0x218 <init_timer0_pwm>
+ 292:	cb df       	rcall	.-106    	; 0x22a <init_motor>
 	//init_stepper();
 	sei();
- 49c:	c6 de       	rcall	.-628    	; 0x22a <init_motor>
+ 294:	ba df       	rcall	.-140    	; 0x20a <init_interrupts>
+ 296:	78 94       	sei
+ 298:	ff cf       	rjmp	.-2      	; 0x298 <main+0x20>
 
-	// Calibrate ADC before program starts
-	//CHECK: is the array passed by reference? Should a struct be used instead?
-	//uint16_t calibration_values[4][4];	<- Need to access this from interrupts so make it global
-	ADC_calibrate();
- 49e:	b5 de       	rcall	.-662    	; 0x20a <init_interrupts>
- 4a0:	78 94       	sei
- 4a2:	2c df       	rcall	.-424    	; 0x2fc <ADC_calibrate>
- 4a4:	ff cf       	rjmp	.-2      	; 0x4a4 <main+0x22>
+0000029a <_exit>:
+ 29a:	f8 94       	cli
 
-000004a6 <__umulhisi3>:
- 4a6:	a2 9f       	mul	r26, r18
- 4a8:	b0 01       	movw	r22, r0
- 4aa:	b3 9f       	mul	r27, r19
- 4ac:	c0 01       	movw	r24, r0
- 4ae:	a3 9f       	mul	r26, r19
- 4b0:	70 0d       	add	r23, r0
- 4b2:	81 1d       	adc	r24, r1
- 4b4:	11 24       	eor	r1, r1
- 4b6:	91 1d       	adc	r25, r1
- 4b8:	b2 9f       	mul	r27, r18
- 4ba:	70 0d       	add	r23, r0
- 4bc:	81 1d       	adc	r24, r1
- 4be:	11 24       	eor	r1, r1
- 4c0:	91 1d       	adc	r25, r1
- 4c2:	08 95       	ret
-
-000004c4 <_exit>:
- 4c4:	f8 94       	cli
-
-000004c6 <__stop_program>:
- 4c6:	ff cf       	rjmp	.-2      	; 0x4c6 <__stop_program>
+0000029c <__stop_program>:
+ 29c:	ff cf       	rjmp	.-2      	; 0x29c <__stop_program>
