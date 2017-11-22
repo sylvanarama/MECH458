@@ -59,7 +59,7 @@ Discarded input sections
  .bss           0x00000000        0x0 sortingSystem.o
  .text.init_stepper
                 0x00000000       0x26 sortingSystem.o
- .text.mTimer   0x00000000       0x50 sortingSystem.o
+ .text.mTimer   0x00000000       0x46 sortingSystem.o
  .text.button_pressed
                 0x00000000       0x26 sortingSystem.o
  .text.update_motor_speed
@@ -75,9 +75,11 @@ Discarded input sections
  .text.display_reflective_reading
                 0x00000000       0x34 sortingSystem.o
  .text.ADC_calibrate
-                0x00000000      0x1a8 sortingSystem.o
+                0x00000000      0x1b0 sortingSystem.o
  .data.motor_direction
                 0x00000000        0x1 sortingSystem.o
+ .data.calibration_vals
+                0x00000000        0x8 sortingSystem.o
  .text          0x00000000        0x0 stepper_motor.o
  .data          0x00000000        0x0 stepper_motor.o
  .bss           0x00000000        0x0 stepper_motor.o
@@ -574,11 +576,19 @@ END GROUP
 .debug_pubnames
  *(.debug_pubnames)
 
+<<<<<<< HEAD
 .debug_info     0x00000000     0x19b0
  *(.debug_info .gnu.linkonce.wi.*)
  .debug_info    0x00000000      0xb70 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.2.132/gcc/dev/at90usb1287/avr51/crtat90usb1287.o
  .debug_info    0x00000b70      0x447 queue.o
  .debug_info    0x00000fb7      0x9f9 sortingSystem.o
+=======
+.debug_info     0x00000000     0x19cb
+ *(.debug_info .gnu.linkonce.wi.*)
+ .debug_info    0x00000000      0xb70 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.2.132/gcc/dev/at90usb1287/avr51/crtat90usb1287.o
+ .debug_info    0x00000b70      0x447 queue.o
+ .debug_info    0x00000fb7      0xa14 sortingSystem.o
+>>>>>>> 3aa90fa31ab7d28e9b0ef2c7c5e974fe05472ca5
 
 .debug_abbrev   0x00000000      0xef1
  *(.debug_abbrev)
@@ -597,13 +607,22 @@ END GROUP
  .debug_frame   0x00000000      0x118 queue.o
  .debug_frame   0x00000118      0x370 sortingSystem.o
 
+<<<<<<< HEAD
 .debug_str      0x00000000      0x82a
+=======
+.debug_str      0x00000000      0x889
+>>>>>>> 3aa90fa31ab7d28e9b0ef2c7c5e974fe05472ca5
  *(.debug_str)
  .debug_str     0x00000000      0x3f7 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.2.132/gcc/dev/at90usb1287/avr51/crtat90usb1287.o
  .debug_str     0x000003f7      0x204 queue.o
                                 0x253 (size before relaxing)
+<<<<<<< HEAD
  .debug_str     0x000005fb      0x22f sortingSystem.o
                                 0x432 (size before relaxing)
+=======
+ .debug_str     0x000005fb      0x28e sortingSystem.o
+                                0x455 (size before relaxing)
+>>>>>>> 3aa90fa31ab7d28e9b0ef2c7c5e974fe05472ca5
 
 .debug_loc      0x00000000      0xddb
  *(.debug_loc)

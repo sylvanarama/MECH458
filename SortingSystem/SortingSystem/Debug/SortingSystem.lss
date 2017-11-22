@@ -15,6 +15,7 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   5 .debug_aranges 00000150  00000000  00000000  00000864  2**0
                   CONTENTS, READONLY, DEBUGGING
+<<<<<<< HEAD
   6 .debug_info   000019b0  00000000  00000000  000009b4  2**0
                   CONTENTS, READONLY, DEBUGGING
   7 .debug_abbrev 00000ef1  00000000  00000000  00002364  2**0
@@ -28,6 +29,21 @@ Idx Name          Size      VMA       LMA       File off  Algn
  11 .debug_loc    00000ddb  00000000  00000000  00004bae  2**0
                   CONTENTS, READONLY, DEBUGGING
  12 .debug_ranges 00000130  00000000  00000000  00005989  2**0
+=======
+  6 .debug_info   000019cb  00000000  00000000  00000910  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_abbrev 00000ef1  00000000  00000000  000022db  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_line   00000ca4  00000000  00000000  000031cc  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_frame  000004a8  00000000  00000000  00003e70  2**2
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str    00000889  00000000  00000000  00004318  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_loc    00000dd5  00000000  00000000  00004ba1  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_ranges 00000130  00000000  00000000  00005976  2**0
+>>>>>>> 3aa90fa31ab7d28e9b0ef2c7c5e974fe05472ca5
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -153,12 +169,6 @@ Disassembly of section .text:
   d2:	61 c1       	rjmp	.+706    	; 0x396 <__vector_default>
 
 000000d4 <initItem>:
-		free(temp);
-	}/*while*/
-
-	q->tail = NULL;		
-	return;
-}//clearQueue
   d4:	87 e0       	ldi	r24, 0x07	; 7
   d6:	90 e0       	ldi	r25, 0x00	; 0
   d8:	1c d2       	rcall	.+1080   	; 0x512 <malloc>
@@ -224,9 +234,13 @@ Disassembly of section .text:
  144:	08 95       	ret
 
 00000146 <deleteItem>:
+<<<<<<< HEAD
 
 void deleteItem(item* i){
  146:	7d c2       	rjmp	.+1274   	; 0x642 <free>
+=======
+ 146:	2b c2       	rjmp	.+1110   	; 0x59e <free>
+>>>>>>> 3aa90fa31ab7d28e9b0ef2c7c5e974fe05472ca5
  148:	08 95       	ret
 
 0000014a <size>:
@@ -250,7 +264,7 @@ void deleteItem(item* i){
 
 0000016c <__vector_21>:
 		display_reflective_reading(avg);
-		mTimer(1000);
+		mTimer(7000);
 		
 		update_motor_speed(MOTOR_SPEED);
 	}
@@ -712,6 +726,7 @@ int main(void)
  4f0:	6c df       	rcall	.-296    	; 0x3ca <init_motor>
 
 	// Calibrate ADC before program starts
+
 	//ADC_calibrate();
 
 	itemList = initQueue();
