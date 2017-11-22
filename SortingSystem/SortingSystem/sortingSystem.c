@@ -69,6 +69,9 @@ typedef struct input_object {
 // Calibration
 volatile uint16_t cal_vals_final[4][4];
 
+//Queue
+queue* itemList; 
+
 // ADC variables
 volatile uint16_t ADC_result;
 volatile uint16_t ADC_lowest_val;
@@ -96,11 +99,14 @@ ISR(TIMER0_COMPA_vect){
 }
 
 // Optical Sensor 1 (PD0)
-ISR(INT0_vect){
-	// testing
-	//display_reflective_reading(0);
-	//ADC_lowest_val = 0xFFF;
-	//PORTC = 0x10;
+ISR(INT0_vect){	
+
+	//Add a new item to the queue
+	item* newItem = initItem();
+	newItem->stage = 1;
+	enqueue(itemList, newItem);
+	//Display queue length
+	PORTC = (uint8_t)size(itemList);
 }
 
 // Ferromagnetic Sensor (PD1)
@@ -108,6 +114,11 @@ ISR(INT1_vect){
 	// testing
 	//PORTC |= 0x20;
 	//PORTC = PIND;
+	
+	//Display that the interrupt has fired
+	PORTC |= 0x80;
+	//If this interrupt fires, then the object is metal
+	itemList->head->metal = 1;
 }
 
 //Optical Sensor for ADC, edge triggered (PD2)
@@ -118,7 +129,13 @@ ISR(INT2_vect){
 	
 	//object exiting reflective sensor zone, item ready to be classified
 	if(reflective_present) 
-	{
+	{	
+		if(STATE == OPERATIONAL)
+		{
+			itemList->head->reflective = ADC_lowest_val;
+			itemList->head->stage = 2;
+			PORTC = (uint8_t)size(itemList);
+		}
 		reflective_present = 0;
 		item_ready = 1;
 		
@@ -139,19 +156,19 @@ ISR(INT3_vect){
 	//PORTC |= 0x80;
 	//display_reflective_reading(ADC_lowest_val);
 	//ADC_lowest_val = 0xFFF;
+	
+	//dequeue item, display queue size
+	item* sortedItem = dequeue(itemList);
+	deleteItem(sortedItem);
+	PORTC = (uint8_t)size(itemList);
 }
 
 
 //Interrupt when ADC finished
 ISR(ADC_vect)
 {
-	
-	//ADC_result = 0;	// Clear result
-	
-	// TODO: Change reflective_present to check 'metallic' in the block's input_object 
-	if(reflective_present) {
-		//ADC_result = ((ADCH << 8) + ADCL);
-		//ADC_result = ADCH;
+	if(reflective_present) 
+	{
 		uint16_t low = ADCL;
 		uint16_t high = ADCH;
 		
@@ -161,8 +178,6 @@ ISR(ADC_vect)
 		ADCSRA |= _BV(ADSC);
 	}
 }
-
-
 
 
 
@@ -181,12 +196,12 @@ ISR(BADISR_vect)
 //Set up the interrupts
 void init_interrupts(){		
 	// Specify when interrupts are triggered
-		// INT0 (OS2) - Falling edge
-		// INT1 (Fer) - Falling edge
+		// INT0 (OS1) - Rising edge
+		// INT1 (Fer) - Rising edge
 		// INT2 (OS2) - Either edge
-		// INT3 (OS3) - Falling edge
-	EICRA = 0x9A;
-	
+		// INT3 (OS3) - Rising edge
+	EICRA = 0x9A; // (falling edge triggers for 0, 1, 3)
+		
 	// Enable external interrupts for Port D
 	EIMSK |= 0x0F;
 }
@@ -221,8 +236,8 @@ void init_motor() {
 
 // Initialize the ADC when program starts
 void init_ADC(){
-	ADC_result = 0xFFF;
-	ADC_lowest_val = 0xFFF;
+	ADC_result = 0x3FF;
+	ADC_lowest_val = 0x3FF;
 	reflective_present = 0;
 	item_ready = 0;
 	
@@ -376,22 +391,10 @@ void stepper_position(int new_position){
 	motor_position = new_position;
 }//stepper_position
 
-void metal_sensor(queue* q){
-	item* item = initItem();
-	item->metal = is_metal;
-	item->stage = 1;
-	enqueue(q, item);
-}//metal_sensor
-
-void reflective_sensor(queue* q){
-	q->head->reflective = ADC_lowest_val;
-	q->head->stage = 2;
-}//reflective_sensor
-
 void exit_sensor(queue* q, char* sorted_parts[5]){
 	q->head->stage = 4;
 	item* item = dequeue(q);
-	char type = item->type;
+	uint8_t type = item->type;
 	deleteItem(item);
 	*(sorted_parts[type])++;
 }//exit_sensor
@@ -447,7 +450,7 @@ void ADC_calibrate(){
 			//display_reflective_reading(ADC_lowest_val);
 			
 			cal_vals[i] = ADC_lowest_val;
-			ADC_lowest_val = 0xFFFF;
+			ADC_lowest_val = 0x3FF;
 			item_ready = 0;
 		}
 		PORTC = 0xFF; //signal that all 10 values have been read
@@ -481,20 +484,7 @@ void ADC_calibrate(){
 		cal_vals_final[j][2] = med;
 		cal_vals_final[j][3] = avg;
 		
-		
-		
 		// display the results for the part
-	/*	PORTC = j;
-		mTimer(1000);
-		PORTC = min & 0xFF00;
-		mTimer(1000);
-		PORTC = max & 0xFF00;
-		mTimer(1000);
-		PORTC = med & 0xFF00;
-		mTimer(1000);
-		PORTC = avg & 0xFF00;
-		mTimer(1000);	*/
-		
 		// 1: min, 2: max, 3: med, 4: avg
 		// TODO: cycle display until button pressed and then move on to next part?
 		PORTC = 0x01;
@@ -550,10 +540,10 @@ int main(void)
 	sei();
 
 	// Calibrate ADC before program starts
-	//CHECK: is the array passed by reference? Should a struct be used instead?
-	//uint16_t calibration_values[4][4];	<- Need to access this from interrupts so make it global
-	ADC_calibrate();
+	//ADC_calibrate();
 
+	itemList = initQueue();
+	STATE = OPERATIONAL;
 		
 	// Main Program
 	while (1)

@@ -2,10 +2,10 @@
 
 /* Type definitions */
 typedef struct item{
-	char metal;
-	char reflective;
-	char type;
-    char stage;
+	uint8_t metal;
+	uint16_t reflective;
+	uint8_t type;
+    uint8_t stage;
 	struct item* next;
 } item;
 
