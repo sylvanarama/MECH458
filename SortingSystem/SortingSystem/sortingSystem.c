@@ -59,12 +59,6 @@
 #define WAIT 0x01			// PORTx = 0bXXXXXXX1, means wait to read data from the port
 
 
-// TYPES
-typedef struct input_object {
-	uint8_t metallic;
-	uint8_t type;
-} input_object;
-
 //##############GLOBAL VARIABLES##############//
 // Calibration
 
@@ -75,6 +69,7 @@ volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
 
 //Queue
 queue* itemList; 
+item *reflective_sensor_item;
 
 // ADC variables
 volatile uint16_t ADC_result;
@@ -557,6 +552,9 @@ int main(void)
 	//ADC_calibrate();
 
 	itemList = initQueue();
+	reflective_sensor_item = initItem();
+	reflective_sensor_item = itemList->head;
+	
 	STATE = OPERATIONAL;
 		
 	// Main Program
