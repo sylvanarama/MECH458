@@ -30,12 +30,6 @@
 // MASKS
 #define SENSOR_READING_MASK		0x3FF
 
-// MATERIALS
-#define WHITE					10
-#define BLACK					11
-#define ALUMINUM				12
-#define STEEL					13
-
 //Button
 #define PINA2_HIGH				0x04
 #define PINA2_LOW				0x00	// Active
@@ -58,12 +52,8 @@
 
 #define WAIT 0x01			// PORTx = 0bXXXXXXX1, means wait to read data from the port
 
-
-// TYPES
-typedef struct input_object {
-	uint8_t metallic;
-	uint8_t type;
-} input_object;
+// Types
+enum item_types {WHITE, STEEL, BLACK, ALUMINUM}; // to align with stepper tray order
 
 //##############GLOBAL VARIABLES##############//
 // Calibration
@@ -72,7 +62,6 @@ volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
 
-
 //Queue
 queue* itemList; 
 
@@ -80,9 +69,6 @@ queue* itemList;
 volatile uint16_t ADC_result;
 volatile uint16_t ADC_lowest_val;
 volatile uint8_t reflective_present;
-
-// Sensor variables
-volatile uint8_t is_metal;
 
 // Stepper variables
 volatile int motor_position;
@@ -95,6 +81,7 @@ uint8_t motor_direction = CW;
 // State and Control Variables
 volatile uint8_t STATE;
 volatile uint8_t item_ready;
+volatile uint8_t item_waiting;
 
 //##############	ISRs	##############//
 ISR(TIMER0_COMPA_vect){
@@ -103,7 +90,6 @@ ISR(TIMER0_COMPA_vect){
 }
 
 // Optical Sensor 1 (PD0)
-
 ISR(INT0_vect){	
 	//Add a new item to the queue
 	item* newItem = initItem();
@@ -111,13 +97,11 @@ ISR(INT0_vect){
 	enqueue(itemList, newItem);
 	//Display queue length
 	//PORTC = (uint8_t)size(itemList);
-	//PORTC |= 0x01;
+	PORTC = 0x10;
 }
 
 // Ferromagnetic Sensor (PD1)
 ISR(INT1_vect){
-	//Display that the interrupt has fired
-	PORTC |= 0x80;
 	//If this interrupt fires, then the object is metal
 	itemList->head->metal = 1;
 }
@@ -132,7 +116,7 @@ ISR(INT2_vect){
 			itemList->head->reflective = ADC_lowest_val;
 			ADC_lowest_val = 0x3FF;
 			itemList->head->stage = 2;
-			//PORTC |= 0x02;
+			PORTC &= 0x3F;
 		}
 		reflective_present = 0;
 		item_ready = 1;
@@ -148,10 +132,15 @@ ISR(INT2_vect){
 // Optical sensor - exit position (PD3)
 ISR(INT3_vect){
 	//dequeue item, display queue size
+	if(stepper_on) 
+	{
+		update_motor_speed(0);
+		item_waiting = 1;
+	}
 	item* sortedItem = dequeue(itemList);
 	deleteItem(sortedItem);
 	//PORTC = (uint8_t)size(itemList);
-	//PORTC |= 0x04;
+	PORTC &= 0x70;
 }
 
 
@@ -171,8 +160,6 @@ ISR(ADC_vect)
 	}
 }
 
-
-
 // If an unexpected interrupt occurs (interrupt is enabled and no handler is installed,
 // which usually indicates a bug), then the default action is to reset the device by jumping
 // to the reset vector. You can override this by supplying a function named BADISR_vect which
@@ -188,11 +175,11 @@ ISR(BADISR_vect)
 //Set up the interrupts
 void init_interrupts(){		
 	// Specify when interrupts are triggered
-		// INT0 (OS1) - Rising edge
-		// INT1 (Fer) - Rising edge
+		// INT0 (OS1) - Falling edge
+		// INT1 (Fer) - Falling edge
 		// INT2 (OS2) - Either edge
-		// INT3 (OS3) - Rising edge
-	EICRA = 0x9A; // (falling edge triggers for 0, 1, 3)
+		// INT3 (OS3) - Falling edge
+	EICRA = 0x9A; 
 		
 	// Enable external interrupts for Port D
 	EIMSK |= 0x0F;
@@ -200,9 +187,6 @@ void init_interrupts(){
 
 // Initialize PWM on Timer0
 void init_timer0_pwm() {
-	// Set PB7 to output (for PWM signal)
-	//DDRB |=0x80;		<- in main
-	
 	// Set Waveform Generation Mode to 3 - Fast PWM with TOP = MAX, and OCRA = Compare value
 	TCCR0A |= 0x83;		// TCCR0A7:6 -> COM0A = 0b10	(inverted mode)
 	// TCCR0A1:0 -> WGM1:0 = 11		(Fast PWM)
@@ -212,12 +196,6 @@ void init_timer0_pwm() {
 	
 	// Set value we want timer to reset at (MAX)
 	OCR0A = 0x80; // Duty cycle = 50%
-	
-	// Enable Output Compare A Interrupt
-	//TIMSK0 |= 0x01;
-	
-	// Enable global interrupts
-	//sei();
 }
 
 // Start the motor when program starts
@@ -250,26 +228,6 @@ void init_ADC(){
 	// Enable ADC
 	ADCSRA |= _BV(ADEN);
 	
-		
-	//initialize global variables
-	/*ADC_result = 0xFFF;
-	ADC_lowest_val = 0xFFF;
-	reflective_present = 0;
-	item_ready = 0;
-	
-	//configure external interrupts
-	//EIMSK |= (_BV(INT2)); //enable INT2
-	//EICRA = 0x10;
-	//EICRA |= ~(_BV(ISC21) | _BV(ISC20)); //edge triggered interrupts
-	
-	//configure the ADC
-	//by default ADC analog input set to ADC0/PORTF0
-	ADCSRA |= _BV(ADEN);  //enable ADC
-	ADCSRA |= _BV(ADIE);  //enable interrupts for ADC
-	//ADCSRA |= _BV(ADPS1) | _BV(ADPS0);	// Prescaler = 8 so we can measure all 10 bits		// !!!!**** TEST
-	//ADMUX  |= (_BV(ADLAR) | _BV(REFS0)); // left adjust ADC result, use AVcc as voltage ref, with ext. capacitor on AREF pin
-	ADMUX |= _BV(REFS0) | _BV(MUX0);	*/
-	
 }//init_ADC
 
 // Set Port A to output (for stepper motor), initialize pins to Step 1 position, reset global variables
@@ -289,7 +247,6 @@ void mTimer(int count)
 	TCCR1B |= _BV(WGM12);	// Set WGM bits to 0100, see pg 142
 	OCR1A = 0x03E8;			// Set output compare register for 1000 cycles  = 1ms
 	TCNT1 = 0x0000;			// Set initial value of Timer Counter to 0x000
-	//TIMSK1 |= 0b00000010;   // Output compare interrupt enable
 	TIFR1 |= _BV(OCF1A);	// Clear timer interrupt flag and begin timer
 	
 	// Poll the timer to determine when the timer has reached 0x03E8
@@ -339,7 +296,7 @@ void change_motor_direction() {
 	}
 }//change_motor_direction
 
-void stepperRotate(int steps, int direction) {
+void stepper_rotate(int steps, int direction) {
 	stepper_on = 1;
 	int delay = 20;
 	int i;
@@ -370,25 +327,22 @@ void stepperRotate(int steps, int direction) {
 		if(((steps - i) <= 5) && (delay <=20)) delay += 2; //deceleration
 	}//for
 	stepper_on = 0;
+	if(item_waiting) 
+	{
+		update_motor_speed(MOTOR_SPEED);
+		item_waiting = 0;
+	}
 } //stepperRotate
 
-void stepper_position(int new_position){
+void stepper_position(uint8_t new_position){
 	int diff = (new_position - motor_position);
 	
-	if((diff == 1) || (diff == -3)) stepperRotate(TURN_90, CLOCKWISE);
-	else if((diff == -1) || (diff == 3)) stepperRotate(TURN_90, WIDDERSHINS);
-	else if((diff == 2) || (diff == -2)) stepperRotate(TURN_180, CLOCKWISE);
+	if((diff == 1) || (diff == -3)) stepper_rotate(TURN_90, CLOCKWISE);
+	else if((diff == -1) || (diff == 3)) stepper_rotate(TURN_90, WIDDERSHINS);
+	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CLOCKWISE);
 
 	motor_position = new_position;
 }//stepper_position
-
-void exit_sensor(queue* q, char* sorted_parts[5]){
-	q->head->stage = 4;
-	item* item = dequeue(q);
-	uint8_t type = item->type;
-	deleteItem(item);
-	*(sorted_parts[type])++;
-}//exit_sensor
 
 void classify_item(){
 	uint16_t r = itemList->head->reflective;
@@ -403,23 +357,23 @@ void classify_item(){
 	{
 		diff_white = abs(calibration_vals[0] - r);
 		diff_black = abs(calibration_vals[1] - r);
-		if(diff_white < diff_black) type = 1;
-		else type = 2;
+		if(diff_white < diff_black) type = WHITE;
+		else type = BLACK;
 	}
 	
 	if(m == 1)
 	{
 		diff_aluminum = abs(calibration_vals[2] - r);
 		diff_steel = abs(calibration_vals[3] - r);
-		if(diff_aluminum < diff_steel) type = 3;
-		else type = 4;
+		if(diff_aluminum < diff_steel) type = ALUMINUM;
+		else type = STEEL;
 	}	 
 	itemList->head->type = type; 
 	itemList->head->stage = 3;
+	stepper_position(type);
 	
 	//TESTING	
-	PORTC = type;
-	mTimer(3000);
+	PORTC |= type;
 		
 }//classify_item
 
@@ -441,7 +395,6 @@ void display_reflective_reading(uint16_t value) {
 	//PORTC = temp;
 	PORTD |= temp;
 }
-
 
 //Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
 void ADC_calibrate(){
@@ -558,7 +511,7 @@ int main(void)
 
 	itemList = initQueue();
 	STATE = OPERATIONAL;
-		
+	item_waiting = 0;	
 	// Main Program
 	while (1)
 	{
