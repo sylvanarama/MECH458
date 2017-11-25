@@ -104,6 +104,7 @@ ISR(INT0_vect){
 ISR(INT1_vect){
 	//If this interrupt fires, then the object is metal
 	itemList->head->metal = 1;
+	PORTC |= 0x20;
 }
 
 //Optical Sensor for ADC, edge triggered (PD2)
@@ -116,7 +117,7 @@ ISR(INT2_vect){
 			itemList->head->reflective = ADC_lowest_val;
 			ADC_lowest_val = 0x3FF;
 			itemList->head->stage = 2;
-			PORTC &= 0x3F;
+			PORTC |= 0x40;
 		}
 		reflective_present = 0;
 		item_ready = 1;
@@ -140,7 +141,7 @@ ISR(INT3_vect){
 	item* sortedItem = dequeue(itemList);
 	deleteItem(sortedItem);
 	//PORTC = (uint8_t)size(itemList);
-	PORTC &= 0x70;
+	PORTC |= 0x80;
 }
 
 
@@ -370,7 +371,6 @@ void classify_item(){
 	}	 
 	itemList->head->type = type; 
 	itemList->head->stage = 3;
-	stepper_position(type);
 	
 	//TESTING	
 	PORTC |= type;
