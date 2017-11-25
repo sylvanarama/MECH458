@@ -52,11 +52,8 @@
 
 #define WAIT 0x01			// PORTx = 0bXXXXXXX1, means wait to read data from the port
 
-<<<<<<< HEAD
-=======
 // Types
 enum item_types {WHITE, STEEL, BLACK, ALUMINUM}; // to align with stepper tray order
->>>>>>> sorting+stepper
 
 //##############GLOBAL VARIABLES##############//
 // Calibration
