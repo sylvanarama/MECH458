@@ -58,6 +58,11 @@
 
 #define WAIT 0x01			// PORTx = 0bXXXXXXX1, means wait to read data from the port
 
+<<<<<<< HEAD
+=======
+// Types
+enum item_types {WHITE, STEEL, BLACK, ALUMINUM}; // to align with stepper tray order
+>>>>>>> sorting+stepper
 
 //##############GLOBAL VARIABLES##############//
 // Calibration
@@ -90,6 +95,7 @@ uint8_t motor_direction = CW;
 // State and Control Variables
 volatile uint8_t STATE;
 volatile uint8_t item_ready;
+volatile uint8_t item_waiting;
 
 //##############	ISRs	##############//
 ISR(TIMER0_COMPA_vect){
@@ -107,6 +113,7 @@ ISR(INT0_vect){
 	//Display queue length
 	//PORTC = (uint8_t)size(itemList);
 	//PORTC |= 0x01;
+	PORTC = 0x10;
 }
 
 // Ferromagnetic Sensor (PD1)
@@ -115,6 +122,7 @@ ISR(INT1_vect){
 	PORTC |= 0x80;
 	//If this interrupt fires, then the object is metal
 	itemList->head->metal = 1;
+	PORTC |= 0x20;
 }
 
 //Optical Sensor for ADC, edge triggered (PD2)
@@ -128,6 +136,7 @@ ISR(INT2_vect){
 			ADC_lowest_val = 0x3FF;
 			itemList->head->stage = 2;
 			//PORTC |= 0x02;
+			PORTC |= 0x40;
 		}
 		reflective_present = 0;
 		item_ready = 1;
@@ -143,10 +152,16 @@ ISR(INT2_vect){
 // Optical sensor - exit position (PD3)
 ISR(INT3_vect){
 	//dequeue item, display queue size
+	if(stepper_on) 
+	{
+		update_motor_speed(0);
+		item_waiting = 1;
+	}
 	item* sortedItem = dequeue(itemList);
 	deleteItem(sortedItem);
 	//PORTC = (uint8_t)size(itemList);
 	//PORTC |= 0x04;
+	PORTC |= 0x80;
 }
 
 
@@ -185,9 +200,13 @@ void init_interrupts(){
 	// Specify when interrupts are triggered
 		// INT0 (OS1) - Rising edge
 		// INT1 (Fer) - Rising edge
+		// INT0 (OS1) - Falling edge
+		// INT1 (Fer) - Falling edge
 		// INT2 (OS2) - Either edge
 		// INT3 (OS3) - Rising edge
 	EICRA = 0x9A; // (falling edge triggers for 0, 1, 3)
+		// INT3 (OS3) - Falling edge
+	EICRA = 0x9A; 
 		
 	// Enable external interrupts for Port D
 	EIMSK |= 0x0F;
@@ -335,6 +354,7 @@ void change_motor_direction() {
 }//change_motor_direction
 
 void stepperRotate(int steps, int direction) {
+void stepper_rotate(int steps, int direction) {
 	stepper_on = 1;
 	int delay = 20;
 	int i;
@@ -365,14 +385,23 @@ void stepperRotate(int steps, int direction) {
 		if(((steps - i) <= 5) && (delay <=20)) delay += 2; //deceleration
 	}//for
 	stepper_on = 0;
+	if(item_waiting) 
+	{
+		update_motor_speed(MOTOR_SPEED);
+		item_waiting = 0;
+	}
 } //stepperRotate
 
 void stepper_position(int new_position){
+void stepper_position(uint8_t new_position){
 	int diff = (new_position - motor_position);
 	
 	if((diff == 1) || (diff == -3)) stepperRotate(TURN_90, CLOCKWISE);
 	else if((diff == -1) || (diff == 3)) stepperRotate(TURN_90, WIDDERSHINS);
 	else if((diff == 2) || (diff == -2)) stepperRotate(TURN_180, CLOCKWISE);
+	if((diff == 1) || (diff == -3)) stepper_rotate(TURN_90, CLOCKWISE);
+	else if((diff == -1) || (diff == 3)) stepper_rotate(TURN_90, WIDDERSHINS);
+	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CLOCKWISE);
 
 	motor_position = new_position;
 }//stepper_position
@@ -400,6 +429,8 @@ void classify_item(){
 		diff_black = abs(calibration_vals[1] - r);
 		if(diff_white < diff_black) type = 1;
 		else type = 2;
+		if(diff_white < diff_black) type = WHITE;
+		else type = BLACK;
 	}
 	
 	if(m == 1)
@@ -408,6 +439,8 @@ void classify_item(){
 		diff_steel = abs(calibration_vals[3] - r);
 		if(diff_aluminum < diff_steel) type = 3;
 		else type = 4;
+		if(diff_aluminum < diff_steel) type = ALUMINUM;
+		else type = STEEL;
 	}	 
 	itemList->head->type = type; 
 	itemList->head->stage = 3;
@@ -415,6 +448,7 @@ void classify_item(){
 	//TESTING	
 	PORTC = type;
 	mTimer(3000);
+	PORTC |= type;
 		
 }//classify_item
 
@@ -436,7 +470,6 @@ void display_reflective_reading(uint16_t value) {
 	//PORTC = temp;
 	PORTD |= temp;
 }
-
 
 //Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
 void ADC_calibrate(){
@@ -556,7 +589,7 @@ int main(void)
 	reflective_sensor_item = itemList->head;
 	
 	STATE = OPERATIONAL;
-		
+	item_waiting = 0;	
 	// Main Program
 	while (1)
 	{
