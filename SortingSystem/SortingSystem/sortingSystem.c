@@ -63,8 +63,8 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM}; // to align with stepper tray o
 volatile uint16_t cal_vals_final[4][4];	
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
-//volatile uint16_t calibration_vals[4] = {735, 764, 410, 617};	// Station 3
-volatile uint16_t calibration_vals[4] = {740, 764, 500, 700};	// Station 3 new pieces
+volatile uint16_t calibration_vals[4] = {735, 764, 410, 617};	// Station 3
+//volatile uint16_t calibration_vals[4] = {740, 764, 500, 700};	// Station 3 new pieces
 			// For white maybe use min instead of med
 
 //Queue
@@ -118,8 +118,8 @@ ISR(INT0_vect){
 // Ferromagnetic Sensor (PD1)
 ISR(INT1_vect){
 	//If this interrupt fires, then the object is metal
-	itemList->head->metal = 1;
-	PORTC |= 0x20;
+	itemList->tail->metal = 1;
+	//PORTC |= 0x20;
 }
 
 //Optical Sensor for ADC, edge triggered (PD2)
@@ -154,6 +154,7 @@ ISR(INT2_vect){
 	}
 }
 
+
 // Optical sensor - exit position (PD3)
 ISR(INT3_vect){
 	//dequeue item, display queue size
@@ -165,14 +166,13 @@ ISR(INT3_vect){
 	
 	// tesing
 	//PORTC = itemList->tail->type;
-	PORTC = 0x00;
-	PORTC = (itemList->head->stage << 4) + itemList->head->type;
+	//PORTC =  itemList->head->type;
 	
 	item* sortedItem = dequeue(itemList);
 	
 	// testing
 	//PORTC = (sortedItem->type << 4) + (uint8_t)size(itemList);
-	
+	PORTC = sortedItem->type;
 	
 	deleteItem(sortedItem);
 	//PORTC = (uint8_t)size(itemList);
@@ -389,25 +389,7 @@ void classify_item(){
 	uint16_t diff_white;
 	uint16_t diff_black;
 	uint16_t diff_steel;
-	uint16_t diff_aluminum;
-	
-	display_reflective_reading(r);
-/*	
-	uint16_t diffs_array[4];	// Wh, Bl, Al, St
-	uint16_t lowest_val = 0x3FF;
-	
-	diffs_array[0] = abs(calibration_vals[0] - r);
-	diffs_array[1] = abs(calibration_vals[1] - r);
-	diffs_array[2] = abs(calibration_vals[2] - r);
-	diffs_array[3] = abs(calibration_vals[3] - r); 
-	
-	int i = 0;
-	for (i = 0; i < 4; i++) {
-		if (diffs_array[i] < lowest_val) {
-			type = i;
-		}
-	}	*/
-	
+	uint16_t diff_aluminum;	
 
 	if(m == 0)
 	{
@@ -571,8 +553,8 @@ int main(void)
 	//adc_calibrate();
 
 	itemList = initQueue();
-	reflective_sensor_item = initItem();
-	item_to_classify = initItem();
+	/*reflective_sensor_item = initItem();
+	item_to_classify = initItem();	*/
 	
 	reflective_sensor_item = itemList->head;
 	item_to_classify = itemList->head;
@@ -590,6 +572,7 @@ int main(void)
 	}//while
 	return 0;
 }//main
+
 
 
 
