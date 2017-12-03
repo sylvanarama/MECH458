@@ -12,7 +12,7 @@ item* initItem(){
 	newItem->next = NULL;
 	newItem->metal = 0;
 	newItem->reflective = 0;
-	newItem->type = 0;
+	newItem->type = 7;		// initial value = 7 for testing
 	newItem->stage = 0;
 	return newItem;
 }//initLink
