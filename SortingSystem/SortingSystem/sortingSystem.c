@@ -553,8 +553,6 @@ int main(void)
 	//adc_calibrate();
 
 	itemList = initQueue();
-	/*reflective_sensor_item = initItem();
-	item_to_classify = initItem();	*/
 	
 	reflective_sensor_item = itemList->head;
 	item_to_classify = itemList->head;
