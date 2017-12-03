@@ -52,19 +52,25 @@
 
 #define WAIT 0x01			// PORTx = 0bXXXXXXX1, means wait to read data from the port
 
+
 // Types
 enum item_types {WHITE, STEEL, BLACK, ALUMINUM}; // to align with stepper tray order
+
 
 //##############GLOBAL VARIABLES##############//
 // Calibration
 
 volatile uint16_t cal_vals_final[4][4];	
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
-volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
+//volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
+//volatile uint16_t calibration_vals[4] = {735, 764, 410, 617};	// Station 3
+volatile uint16_t calibration_vals[4] = {740, 764, 500, 700};	// Station 3 new pieces
+			// For white maybe use min instead of med
 
 //Queue
 queue* itemList; 
 item *reflective_sensor_item;
+item *item_to_classify;
 
 // ADC variables
 volatile uint16_t ADC_result;
@@ -94,11 +100,19 @@ ISR(TIMER0_COMPA_vect){
 ISR(INT0_vect){	
 	//Add a new item to the queue
 	item* newItem = initItem();
-	newItem->stage = 1;
+	//newItem->stage = 1;
+	newItem->stage = size(itemList) + 1;
 	enqueue(itemList, newItem);
+	
+	if (size(itemList) == 1) {
+		reflective_sensor_item = itemList->head;
+		item_to_classify = itemList->head;
+	}
+	
 	//Display queue length
-	//PORTC = (uint8_t)size(itemList);
-	PORTC = 0x10;
+	//PORTC &= 0xF0;
+	//PORTC |= (uint8_t)size(itemList);
+	//PORTC = 0x10;
 }
 
 // Ferromagnetic Sensor (PD1)
@@ -115,10 +129,19 @@ ISR(INT2_vect){
 	{	
 		if(STATE == OPERATIONAL)
 		{
-			itemList->head->reflective = ADC_lowest_val;
+			//itemList->head->reflective = ADC_lowest_val;
+			reflective_sensor_item->reflective = ADC_lowest_val;
 			ADC_lowest_val = 0x3FF;
-			itemList->head->stage = 2;
-			PORTC |= 0x40;
+			
+			// Update item's position on the conveyor belt
+			//itemList->head->stage = 2;
+			//reflective_sensor_item->stage = 2;
+			
+			// Update where reflective_sensor_item points
+			reflective_sensor_item = reflective_sensor_item->next;
+			
+			// testing
+			//PORTC |= 0x40;
 		}
 		reflective_present = 0;
 		item_ready = 1;
@@ -139,10 +162,21 @@ ISR(INT3_vect){
 		update_motor_speed(0);
 		item_waiting = 1;
 	}
+	
+	// tesing
+	//PORTC = itemList->tail->type;
+	PORTC = 0x00;
+	PORTC = (itemList->head->stage << 4) + itemList->head->type;
+	
 	item* sortedItem = dequeue(itemList);
+	
+	// testing
+	//PORTC = (sortedItem->type << 4) + (uint8_t)size(itemList);
+	
+	
 	deleteItem(sortedItem);
 	//PORTC = (uint8_t)size(itemList);
-	PORTC |= 0x80;
+	//PORTC |= 0x80;
 }
 
 
@@ -347,13 +381,33 @@ void stepper_position(uint8_t new_position){
 }//stepper_position
 
 void classify_item(){
-	uint16_t r = itemList->head->reflective;
-	uint8_t m = itemList->head->metal;
+	//uint16_t r = itemList->head->reflective;
+	//uint8_t m = itemList->head->metal;
+	uint16_t r = item_to_classify->reflective;
+	uint8_t m = item_to_classify->metal;	
 	uint8_t type = 0;
 	uint16_t diff_white;
 	uint16_t diff_black;
 	uint16_t diff_steel;
 	uint16_t diff_aluminum;
+	
+	display_reflective_reading(r);
+/*	
+	uint16_t diffs_array[4];	// Wh, Bl, Al, St
+	uint16_t lowest_val = 0x3FF;
+	
+	diffs_array[0] = abs(calibration_vals[0] - r);
+	diffs_array[1] = abs(calibration_vals[1] - r);
+	diffs_array[2] = abs(calibration_vals[2] - r);
+	diffs_array[3] = abs(calibration_vals[3] - r); 
+	
+	int i = 0;
+	for (i = 0; i < 4; i++) {
+		if (diffs_array[i] < lowest_val) {
+			type = i;
+		}
+	}	*/
+	
 
 	if(m == 0)
 	{
@@ -369,12 +423,18 @@ void classify_item(){
 		diff_steel = abs(calibration_vals[3] - r);
 		if(diff_aluminum < diff_steel) type = ALUMINUM;
 		else type = STEEL;
-	}	 
-	itemList->head->type = type; 
-	itemList->head->stage = 3;
+	}	
+	 
+	//itemList->head->type = type; 
+	//itemList->head->stage = 3;
+	item_to_classify->type = type;
+	//item_to_classify->stage = 3;
 	
-	//TESTING	
-	PORTC |= type;
+	//TESTING
+	//PORTC = (item_to_classify->stage << 4) + type;
+	
+	item_to_classify = item_to_classify->next;	
+	
 		
 }//classify_item
 
@@ -398,7 +458,7 @@ void display_reflective_reading(uint16_t value) {
 }
 
 //Calibrate the ADC by running each part through the sensor 10 times, in the order: white, black, aluminum, steel
-void ADC_calibrate(){
+void adc_calibrate(){
 	
 	int i,j,k;
 	uint16_t cal_vals[10];
@@ -508,11 +568,14 @@ int main(void)
 
 	// Calibrate ADC before program starts
 
-	//ADC_calibrate();
+	//adc_calibrate();
 
 	itemList = initQueue();
 	reflective_sensor_item = initItem();
+	item_to_classify = initItem();
+	
 	reflective_sensor_item = itemList->head;
+	item_to_classify = itemList->head;
 	
 	STATE = OPERATIONAL;
 	item_waiting = 0;	
@@ -527,7 +590,6 @@ int main(void)
 	}//while
 	return 0;
 }//main
-
 
 
 
