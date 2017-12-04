@@ -14,6 +14,7 @@ item* initItem(){
 	newItem->reflective = 0;
 	newItem->type = 0;
 	newItem->stage = 0;
+	newItem->number = 0;
 	return newItem;
 }//initLink
 

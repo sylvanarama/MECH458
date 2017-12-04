@@ -6,6 +6,7 @@ typedef struct item{
 	uint16_t reflective;
 	uint8_t type;
     uint8_t stage;
+	uint8_t number;
 	struct item* next;
 } item;
 

@@ -48,7 +48,6 @@
 #define WIDDERSHINS -1
 #define TURN_90 50
 #define TURN_180 100
-#define DELAY 20
 
 // Types
 enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper tray order
@@ -62,10 +61,10 @@ volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
 
 //Queue
 queue* itemList;
-item* metal_sensor_item;
-item* reflective_sensor_item;
-item* sorted_item;
-item* exit_sensor_item;
+queue* entryList;
+queue* reflectiveList;
+queue* classifiedList;
+queue* sortedList;
 
 // ADC variables
 volatile uint16_t ADC_result;
@@ -74,9 +73,10 @@ volatile uint8_t reflective_present;
 
 // Stepper variables
 volatile int motor_position;
-volatile int stepnum;
 volatile int stepper_on;
-
+uint8_t step_CW[] = {STEP1, STEP2, STEP3, STEP4};
+uint8_t step_CCW[] = {STEP4, STEP3, STEP2, STEP1};
+	
 // Motor variables
 uint8_t motor_direction = CW;
 
@@ -84,14 +84,15 @@ uint8_t motor_direction = CW;
 volatile uint8_t STATE;
 volatile uint8_t item_ready;
 volatile uint8_t item_waiting;
+volatile uint8_t item_number;
 volatile uint8_t OS1_flag;
 volatile uint8_t OS2_flag;
 volatile uint8_t OS3_flag;
 volatile uint8_t FER_flag;
 volatile uint8_t ADC_flag;
 
-//Sorted Parts
-volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; // White, steel, black, aluminum, total
+//Sorted Parts: white, steel, black, aluminum, total
+volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
 	
 
 
@@ -216,7 +217,6 @@ void init_stepper(){
 	DDRA = 0xff;
 	PORTA = STEP1;
 	motor_position = 1;
-	stepnum = 1;
 	stepper_on = 0;
 }//stepperInit
 
@@ -279,41 +279,30 @@ void change_motor_direction() {
 }//change_motor_direction
 
 void stepper_rotate(int steps, int direction) {
-	stepper_on = 1;
-	int delay = 20;
-	int i;
-	for(i=0;i<steps;i++){
-		if(direction == CLOCKWISE)   stepnum = ((stepnum % 4) + 1);
-		if(direction == WIDDERSHINS) stepnum = ((stepnum - 1) % 4);
-		if(stepnum == 0) stepnum = 4;
-		switch(stepnum){
-			case(1):
-				PORTA = STEP1;
-				mTimer(delay);
-				break;
-			case(2):
-				PORTA = STEP2;
-				mTimer(delay);
-				break;
-			case(3):
-				PORTA = STEP3;
-				mTimer(delay);
-				break;
-			case(4):
-				PORTA = STEP4;
-				mTimer(delay);
-				break;
-			default: break;
-		}//switch
-		if((i<5) && (delay >= 10)) delay -= 2; //acceleration
-		if(((steps - i) <= 5) && (delay <=20)) delay += 2; //deceleration
-	}//for
-	stepper_on = 0;
-	if(item_waiting)
+	int max_delay = 10;
+	int min_delay = 6;
+	int delay_diff = max_delay-min_delay;
+	int delay = max_delay;
+	static int stepnum = 0;
+	int i = 0;
+	for(i=0; i<steps; i++)
 	{
-		update_motor_speed(MOTOR_SPEED);
-		item_waiting = 0;
-	}
+		if(direction == CLOCKWISE)
+		{
+			PORTA = step_CW[stepnum];
+			stepnum = (stepnum+1) % 4;
+		}
+		
+		if(direction == WIDDERSHINS)
+		{
+			PORTA = step_CCW[stepnum];
+			stepnum = (stepnum+1) % 4;
+		}
+		mTimer(delay);
+		if((i<delay_diff) && (delay >= min_delay)) delay--; //acceleration
+		if(((steps - i) <= delay_diff) && (delay <= max_delay)) delay++; //deceleration
+	
+	}//for
 } //stepperRotate
 
 void stepper_position(uint8_t new_position){
@@ -324,6 +313,8 @@ void stepper_position(uint8_t new_position){
 	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CLOCKWISE);
 
 	motor_position = new_position;
+	//init_motor();
+
 }//stepper_position
 
 
@@ -372,7 +363,8 @@ void ADC_calibrate(){
 		PORTC = 0xFF; //signal that all 10 values have been read
 		
 		// testing
-		update_motor_speed(0);
+		//update_motor_speed(0);
+		PORTB = 0x00;
 		
 		mTimer(100);
 		// calculate the minimum, maximum, median, and mean of the 10 values
@@ -427,33 +419,35 @@ void ADC_calibrate(){
 		display_reflective_reading(avg);
 		mTimer(7000);
 		
-		update_motor_speed(MOTOR_SPEED);
+		//update_motor_speed(MOTOR_SPEED);
+		init_motor();
 	}
 }//ADC_calibrate
 
 void entry_sensor()
 {
+	PORTC = 0x10;
 	OS1_flag = 0;
+	// To keep track of how many items have been added
+	item_number++;
 	//Add a new item to the queue
 	item* newItem = initItem();
+	newItem->number = item_number;
 	newItem->stage = 1;
-	enqueue(itemList, newItem);
-	
-	//Display queue length
-	//PORTC = (uint8_t)size(itemList);
-	PORTC = 0x10;
+	enqueue(entryList, newItem);
+	//PORTC = entryList->tail->number;
 }
 
 void metal_sensor(){
 	//If this interrupt fires, then the object is metal
 	FER_flag = 0;
-	metal_sensor_item->metal = 1;
-	metal_sensor_item = metal_sensor_item->next;
+	entryList->tail->metal = 1;
 	PORTC |= 0x20;
 }
 
 void reflective_sensor(){
 	OS2_flag = 0;
+	PORTC |= 0x40;
 	//object entering reflective sensor zone, start ADC conversion
 	if(reflective_present)
 	{
@@ -464,21 +458,33 @@ void reflective_sensor(){
 	{
 		if(STATE == OPERATIONAL)
 		{
+			item* reflective_sensor_item = dequeue(entryList);
+			//TESTING
+			/*
+			next_item++;
+			if(reflective_sensor_item->number != next_item) 
+			{
+				PORTB = 0x00;
+				PORTC = next_item;
+				mTimer(2000);
+				PORTC = entryList->head->number;
+				mTimer(2000);
+			}
+			*/
 			reflective_sensor_item->reflective = ADC_lowest_val;
-			ADC_lowest_val = 0x3FF;
-			reflective_sensor_item->stage = 2;
-			reflective_sensor_item = reflective_sensor_item->next;
-			PORTC |= 0x40;
+			reflective_sensor_item->stage = 2;	
+			enqueue(reflectiveList, reflective_sensor_item);
 		}
+		ADC_lowest_val = 0x3FF;
 		item_ready = 1;
 	}
 }
 
 void classify_item(){
 	item_ready = 0;
-	
-	uint16_t r = reflective_sensor_item->reflective;
-	uint8_t m = reflective_sensor_item->metal;
+	item* item_to_classify = dequeue(reflectiveList);
+	uint16_t r = item_to_classify->reflective;
+	uint8_t m = item_to_classify->metal;
 	uint8_t type = 0;
 	uint16_t diff_white;
 	uint16_t diff_black;
@@ -516,28 +522,30 @@ void classify_item(){
 			sorted_items_array[STEEL]++;
 		}
 	}
-	reflective_sensor_item->type = type;
-	reflective_sensor_item->stage = 3;
+	item_to_classify->type = type;
+	item_to_classify->stage = 3;
 	
 	sorted_items_array[TOTAL]++;
+	enqueue(classifiedList, item_to_classify);
 	
 	//TESTING
-	PORTC |= type;
+	PORTC |= item_to_classify->type;
+	if(item_to_classify->type > 3) PORTC = 0xFF;
 	
 }//classify_item
 
 void exit_sensor(){
-	//dequeue item, display queue size
-	if(stepper_on)
-	{
-		update_motor_speed(0);
-		item_waiting = 1;
-	}
-	
-	exit_sensor_item = dequeue(itemList);
-	deleteItem(exit_sensor_item);
-	//PORTC = (uint8_t)size(itemList);
+	OS3_flag = 0;
+	// Show sensor triggered
 	PORTC |= 0x80;
+	// Brake motor
+	PORTB = 0x00;
+	// Move item to sorted queue
+	enqueue(sortedList, dequeue(classifiedList));
+	//move stepper to correct position
+	stepper_position((sortedList->tail->type)+1);
+	// start motor again
+	init_motor();
 }
 
 //##############	Main Program	##############//
@@ -546,8 +554,7 @@ int main(void)
 {
 	// Init port directions
 	DDRA = 0x00;		// Port A all inputs (button and switch)
-	DDRB = 0x8F;		// PB7 = output for PWM signal
-	// PB3:0 = output for motor
+	DDRB = 0x8F;		// PB7 = output for PWM signal, PB3:0 = output for motor
 	DDRC = 0xFF;		// Port C all output (LEDs)
 	DDRD = 0xF0;		// Port D 3:0 = sensor input (External Interrupts)
 	DDRE = 0x00;		// Port E input (buttons/interrupts)
@@ -568,12 +575,15 @@ int main(void)
 
 	//ADC_calibrate();
 
-	itemList = initQueue();
-	metal_sensor_item = itemList->head;
-	reflective_sensor_item = itemList->head;
-	
+	entryList = initQueue();
+	reflectiveList = initQueue();
+	classifiedList = initQueue();
+	sortedList = initQueue();
+
 	STATE = OPERATIONAL;
 	item_waiting = 0;
+	item_number = 0;
+	
 	// Main Program
 	while (1)
 	{
@@ -581,8 +591,18 @@ int main(void)
 		if(FER_flag) metal_sensor();
 		if(OS2_flag) reflective_sensor();
 		if(item_ready) classify_item();
-		if(OS3_flag) exit_sensor();
+		if(OS3_flag) 
+		{
+			exit_sensor();
+		}
+		
+			
 	}//while
+	
+	clearQueue(entryList);
+	clearQueue(reflectiveList);
+	clearQueue(classifiedList);
+	clearQueue(sortedList);
 	return 0;
 }//main
 
