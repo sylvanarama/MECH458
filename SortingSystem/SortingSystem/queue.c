@@ -14,6 +14,7 @@ item* initItem(){
 	newItem->reflective = 0;
 	newItem->type = 0;
 	newItem->stage = 0;
+	newItem->number = 0;
 	return newItem;
 }//initLink
 
@@ -52,9 +53,10 @@ item* dequeue(queue* q){
 	/* Ensure it is not an empty queue */
 	if (q->head != NULL){
 		q->head = q->head->next;
+		if(q->head == NULL) q->tail = NULL; // if that was the last element in the queue, set tail to NULL as well
+		return deQueuedItem;
 	}/*if*/
-	if(q->head == NULL) q->tail = NULL; // if that was the last element in the queue, set tail to NULL as well
-	return deQueuedItem;
+	else return NULL;
 }/*dequeue*/
 
 
