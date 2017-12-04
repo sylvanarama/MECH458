@@ -530,7 +530,6 @@ void classify_item(){
 	
 	//TESTING
 	PORTC |= item_to_classify->type;
-	if(item_to_classify->type > 3) PORTC = 0xFF;
 	
 }//classify_item
 
