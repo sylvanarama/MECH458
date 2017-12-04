@@ -37,7 +37,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0x70	//0XE0	
+#define MOTOR_SPEED				0x30	//0XE0	
 
 // Stepper
 #define STEP1 0x35
@@ -62,10 +62,10 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM}; // to align with stepper tray o
 volatile uint16_t cal_vals_final[4][4];	
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
-volatile uint16_t calibration_vals[4] = {735, 764, 410, 617};	// Station 3
+//volatile uint16_t calibration_vals[4] = {735, 764, 410, 617};	// Station 3
 //volatile uint16_t calibration_vals[4] = {740, 764, 500, 700};	// Station 3 new pieces
 			// For white maybe use min instead of med
-
+volatile uint16_t calibration_vals[4] = {746, 779, 438, 620};
 //Queue
 queue* itemList; 
 queue* entryList;
@@ -109,7 +109,7 @@ ISR(INT0_vect){
 	newItem->number = item_number;
 	newItem->stage = 1;
 	enqueue(entryList, newItem);	
-	PORTC = entryList->tail->number;
+	//PORTC = entryList->tail->number;
 }
 
 // Ferromagnetic Sensor (PD1)
@@ -159,13 +159,11 @@ ISR(INT2_vect){
 
 // Optical sensor - exit position (PD3)
 ISR(INT3_vect){
-	//dequeue item, display queue size
-	if(stepper_on) 
-	{
-		update_motor_speed(0);
-		item_waiting = 1;
-	}
+	//dequeue item, pause conveyor, rotate stepper
 	enqueue(sortedList, dequeue(classifiedList));
+	PORTB = 0x00;
+	stepper_position((sortedList->tail->type)+1);
+	init_motor();
 }
 
 
@@ -429,7 +427,7 @@ void classify_item(){
 	item_to_classify->type = type; 
 	item_to_classify->stage = 3;
 	
-	//PORTC = item_to_classify->type;
+	PORTC = item_to_classify->type;
 	
 	enqueue(classifiedList, item_to_classify);
 	
@@ -586,7 +584,7 @@ int main(void)
 		{
 			item_ready = 0;
 			classify_item();
-			stepper_position((classifiedList->head->type)+1);	
+			//stepper_position((classifiedList->head->type)+1);	
 		}
 		
 	}//while
