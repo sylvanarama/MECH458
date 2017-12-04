@@ -57,7 +57,10 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 // Calibration
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
-volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
+//volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
+
+// Station 4 2pm: white min, steel avg, black max, aluminum min	
+volatile uint16_t calibration_vals[4] = {746, 620, 779, 438};	
 
 //Queue
 queue* itemList;
@@ -250,7 +253,7 @@ int button_pressed(){
 		mTimer(20);
 		while((PINA & WAIT) != WAIT) continue;
 	}
-	return 1;
+	return 1
 }//button_pressed
 */
 void update_motor_speed(uint16_t speed){
@@ -306,6 +309,9 @@ void stepper_rotate(int steps, int direction) {
 } //stepperRotate
 
 void stepper_position(uint8_t new_position){
+	// Brake DC motor
+	PORTB = 0x00;
+	
 	int diff = (new_position - motor_position);
 	
 	if((diff == 1) || (diff == -3)) stepper_rotate(TURN_90, CLOCKWISE);
@@ -313,7 +319,9 @@ void stepper_position(uint8_t new_position){
 	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CLOCKWISE);
 
 	motor_position = new_position;
-	//init_motor();
+	
+	// start DC motor
+	init_motor();
 
 }//stepper_position
 
@@ -474,8 +482,8 @@ void reflective_sensor(){
 			reflective_sensor_item->reflective = ADC_lowest_val;
 			reflective_sensor_item->stage = 2;	
 			enqueue(reflectiveList, reflective_sensor_item);
+			ADC_lowest_val = 0x3FF;
 		}
-		ADC_lowest_val = 0x3FF;
 		item_ready = 1;
 	}
 }
@@ -493,8 +501,8 @@ void classify_item(){
 
 	if(m == 0)
 	{
-		diff_white = abs(calibration_vals[0] - r);
-		diff_black = abs(calibration_vals[1] - r);
+		diff_white = abs(calibration_vals[WHITE] - r);
+		diff_black = abs(calibration_vals[BLACK] - r);
 		if(diff_white < diff_black) 
 		{
 			type = WHITE;
@@ -509,8 +517,8 @@ void classify_item(){
 	
 	if(m == 1)
 	{
-		diff_aluminum = abs(calibration_vals[2] - r);
-		diff_steel = abs(calibration_vals[3] - r);
+		diff_aluminum = abs(calibration_vals[ALUMINUM] - r);
+		diff_steel = abs(calibration_vals[STEEL] - r);
 		if(diff_aluminum < diff_steel) 
 		{
 			type = ALUMINUM;
@@ -537,14 +545,8 @@ void exit_sensor(){
 	OS3_flag = 0;
 	// Show sensor triggered
 	PORTC |= 0x80;
-	// Brake motor
-	PORTB = 0x00;
 	// Move item to sorted queue
 	enqueue(sortedList, dequeue(classifiedList));
-	//move stepper to correct position
-	stepper_position((sortedList->tail->type)+1);
-	// start motor again
-	init_motor();
 }
 
 //##############	Main Program	##############//
@@ -593,8 +595,8 @@ int main(void)
 		if(OS3_flag) 
 		{
 			exit_sensor();
+			stepper_position((sortedList->tail->type)+1);
 		}
-		
 			
 	}//while
 	
