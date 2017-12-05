@@ -92,6 +92,11 @@ volatile uint8_t FER_flag;
 volatile uint8_t ADC_flag;
 volatile uint8_t pause_entered = 0;
 volatile uint8_t ramp_down_entered = 0;
+volatile uint8_t operational_entered = 0;
+
+// Timer Variables
+volatile uint16_t timer3_1sec = 0x3D09;	// 15625 cycles
+volatile uint16_t timer1_half_conveyor = 0;	// TODO!!!
 
 
 //Sorted Parts: white, steel, black, aluminum, total
@@ -105,8 +110,10 @@ ISR(TIMER0_COMPA_vect){
 	return;
 }
 
-ISR(TIMER1_COMPA_vect){
-	// TODO: Implement ISR
+ISR(TIMER3_COMPA_vect){
+	// testing
+	PORTC = ~PORTC;
+	
 	return;
 }
 
@@ -138,6 +145,7 @@ ISR(INT4_vect) {
 		pause_entered = 1;
 		STATE = PAUSED;
 	} else if (STATE == PAUSED) {
+		operational_entered = 1;
 		STATE = OPERATIONAL;
 	}
 	
@@ -149,6 +157,7 @@ ISR(INT4_vect) {
 ISR(INT5_vect) {
 	ramp_down_entered = 1;
 	STATE = RAMP_DOWN;	// Can't leave this state
+	
 	
 	// testing
 	PORTC = STATE;
@@ -206,6 +215,39 @@ void init_timer0_pwm() {
 	
 	// Set value we want timer to reset at (MAX)
 	OCR0A = 0x80; // Duty cycle = 50%
+}
+
+// Initialize Timer1 for PAUSE and RAMP_DOWN states
+void init_timer3() {
+		// Set Waveform Generation Mode WGM3:0 
+			// Clear timer on Compare Match Mode (WGM3:0 = 4 for OCRnA or 12 for ICRn)
+		TCCR3B |= 0x0B;		// Set WGM3:2 for CTC mode - 0b01
+							// Set Clock Source (CS2:0 - 64 bit prescaler - 0b011)
+		
+		// Set TOP value (what counter counts to)
+		/*OCR1A =	0x03e8;	
+		
+		// Timer initial value to 0
+		TCNT1 = 0x0000;	*/
+		
+		TIMSK3 |= 0x02;		// Enable interrupts on Channel A - OCFnA flag in TIFRn register is set
+		TIFR3 |= 0x02;		// clear output compare flag -> do this in start_timer?
+		
+		// Disable timer 
+		//PRR0 |= 0x20;		// PRTIM0 = 1 disables timer module
+		TIMSK3 &= 0xFD;
+}
+
+void start_timer3(uint16_t top) {
+	// Enable timer
+	//PRR0 &= 0xDF;	// PRTIM0 = 0 enables timer module
+	TIMSK3 |= 0x02;
+	
+	// Timer initial value
+	TCNT3 = 0x0000;
+	
+	// Value timer counts to 
+	OCR3A = top;
 }
 
 // Start the motor when program starts
@@ -593,6 +635,7 @@ int main(void)
 	cli();
 	init_ADC();
 	init_timer0_pwm();
+	init_timer3();
 	init_motor();
 	init_interrupts();
 	init_stepper();
@@ -615,9 +658,21 @@ int main(void)
 	while (1)
 	{
 		// testing
-		PORTC = STATE;
+		//PORTC = STATE;
 		
 		if (STATE == OPERATIONAL) {
+			if (operational_entered) {
+				// start motor
+				PORTB =  CW;
+				
+				// Disable timer
+				//PRR0 |= 0x20;		// PRTIM0 = 1 disables timer module
+				TIMSK3 &= 0xFD;
+				
+				// testing
+				PORTC |= 0x80;
+			}	
+			
 			if(OS1_flag) 
 				entry_sensor();
 			if(FER_flag) 
@@ -635,6 +690,12 @@ int main(void)
 			// Check if just entering PAUSED
 			if (pause_entered) {
 				pause_entered = 0;
+				
+				// turn off motor
+				PORTB =  0;
+				
+				// start timer for 1 sec
+				start_timer3(timer3_1sec);
 			}
 			
 			
@@ -645,7 +706,7 @@ int main(void)
 				
 				// Free queue resources
 			}
-		}
+		}	
 		
 		
 			
