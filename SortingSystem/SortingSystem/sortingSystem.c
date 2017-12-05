@@ -63,20 +63,19 @@ volatile uint16_t cal_vals_final[4][4];
 volatile uint16_t calibration_vals[4] = {746, 620, 779, 438};	
 
 //Queue
-queue* itemList;
 queue* entryList;
 queue* reflectiveList;
 queue* classifiedList;
 queue* sortedList;
 
 // ADC variables
-volatile uint16_t ADC_result;
-volatile uint16_t ADC_lowest_val;
-volatile uint8_t reflective_present;
+volatile uint16_t ADC_result = 0x3FF;
+volatile uint16_t ADC_lowest_val = 0x3FF;
+volatile uint8_t reflective_present = 0;
 
 // Stepper variables
-volatile int motor_position;
-volatile int stepper_on;
+volatile int motor_position = 1;
+volatile int stepper_on = 0;
 uint8_t step_CW[] = {STEP1, STEP2, STEP3, STEP4};
 uint8_t step_CCW[] = {STEP4, STEP3, STEP2, STEP1};
 	
@@ -84,15 +83,15 @@ uint8_t step_CCW[] = {STEP4, STEP3, STEP2, STEP1};
 uint8_t motor_direction = CW;
 
 // State and Control Variables
-volatile uint8_t STATE;
-volatile uint8_t item_ready;
-volatile uint8_t item_waiting;
-volatile uint8_t item_number;
-volatile uint8_t OS1_flag;
-volatile uint8_t OS2_flag;
-volatile uint8_t OS3_flag;
+volatile uint8_t STATE = CALIBRATION;
+volatile uint8_t item_ready = 0;
+volatile uint8_t item_waiting = 0;
+volatile uint8_t item_number = 0;
+volatile uint8_t OS1_flag = 0;
+volatile uint8_t OS2_flag = 0;
+volatile uint8_t OS3_flag = 0;
 //volatile uint8_t FER_flag;
-volatile uint8_t ADC_flag;
+volatile uint8_t ADC_flag = 0;
 
 //Sorted Parts: white, steel, black, aluminum, total
 volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
@@ -167,13 +166,13 @@ ISR(BADISR_vect)
 void init_interrupts(){
 	// Specify when interrupts are triggered
 	// INT0 (OS1) - Falling edge
-	// INT1 (Fer) - Falling edge ** disable
+	// INT1 (Fer) - Falling edge ** disabled
 	// INT2 (OS2) - Either edge
 	// INT3 (OS3) - Falling edge
-	EICRA = 0x9A;
+	EICRA = 0x92;
 	
 	// Enable external interrupts for Port D
-	EIMSK |= 0x0F;
+	EIMSK |= 0x3D;
 }
 
 // Initialize PWM on Timer0
@@ -197,11 +196,6 @@ void init_motor() {
 
 // Initialize the ADC when program starts
 void init_ADC(){
-	ADC_result = 0x3FF;
-	ADC_lowest_val = 0x3FF;
-	reflective_present = 0;
-	item_ready = 0;
-	
 	// Voltage selection
 	ADMUX |= _BV(REFS0);
 	
@@ -554,14 +548,14 @@ int main(void)
 
 	//ADC_calibrate();
 
+	STATE = OPERATIONAL;
+	item_waiting = 0;
+	item_number = 0;
+	
 	entryList = initQueue();
 	reflectiveList = initQueue();
 	classifiedList = initQueue();
 	sortedList = initQueue();
-
-	STATE = OPERATIONAL;
-	item_waiting = 0;
-	item_number = 0;
 	
 	// Main Program
 	while (1)
