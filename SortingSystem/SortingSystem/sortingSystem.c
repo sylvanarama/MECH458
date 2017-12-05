@@ -37,7 +37,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0x70	//0XE0
+#define MOTOR_SPEED				0x30	//0XE0
 
 // Stepper
 #define STEP1 0x35
@@ -91,7 +91,7 @@ volatile uint8_t item_number;
 volatile uint8_t OS1_flag;
 volatile uint8_t OS2_flag;
 volatile uint8_t OS3_flag;
-volatile uint8_t FER_flag;
+//volatile uint8_t FER_flag;
 volatile uint8_t ADC_flag;
 
 //Sorted Parts: white, steel, black, aluminum, total
@@ -112,16 +112,21 @@ ISR(TIMER1_COMPA_vect){
 
 // Optical Sensor 1 (PD0)
 ISR(INT0_vect){
+	PORTC = 0x10;
 	OS1_flag = 1;
 }
 
+/*
 // Ferromagnetic Sensor (PD1)
 ISR(INT1_vect){
+	PORTC |= 0x20;
 	FER_flag = 1;
 }
+*/
 
 //Optical Sensor for ADC, edge triggered (PD2)
 ISR(INT2_vect){
+	PORTC |= 0x40;
 	OS2_flag = 1;
 	if(reflective_present) reflective_present= 0;
 	else reflective_present = 1;
@@ -129,6 +134,7 @@ ISR(INT2_vect){
 
 // Optical sensor - exit position (PD3)
 ISR(INT3_vect){
+	PORTC |= 0x80;
 	OS3_flag = 1;
 }
 
@@ -161,7 +167,7 @@ ISR(BADISR_vect)
 void init_interrupts(){
 	// Specify when interrupts are triggered
 	// INT0 (OS1) - Falling edge
-	// INT1 (Fer) - Falling edge
+	// INT1 (Fer) - Falling edge ** disable
 	// INT2 (OS2) - Either edge
 	// INT3 (OS3) - Falling edge
 	EICRA = 0x9A;
@@ -321,7 +327,7 @@ void stepper_position(uint8_t new_position){
 	motor_position = new_position;
 	
 	// start DC motor
-	init_motor();
+	PORTB = CW;
 
 }//stepper_position
 
@@ -426,9 +432,8 @@ void ADC_calibrate(){
 		//PORTC = avg;
 		display_reflective_reading(avg);
 		mTimer(7000);
-		
-		//update_motor_speed(MOTOR_SPEED);
-		init_motor();
+	
+		PORTB = CW;
 	}
 }//ADC_calibrate
 
@@ -445,17 +450,17 @@ void entry_sensor()
 	enqueue(entryList, newItem);
 	//PORTC = entryList->tail->number;
 }
-
+/*
 void metal_sensor(){
 	//If this interrupt fires, then the object is metal
 	FER_flag = 0;
 	entryList->tail->metal = 1;
-	PORTC |= 0x20;
+	//PORTC |= 0x20;
 }
-
+*/
 void reflective_sensor(){
 	OS2_flag = 0;
-	PORTC |= 0x40;
+	//PORTC |= 0x40;
 	//object entering reflective sensor zone, start ADC conversion
 	if(reflective_present)
 	{
@@ -492,48 +497,21 @@ void classify_item(){
 	item_ready = 0;
 	item* item_to_classify = dequeue(reflectiveList);
 	uint16_t r = item_to_classify->reflective;
-	uint8_t m = item_to_classify->metal;
 	uint8_t type = 0;
-	uint16_t diff_white;
-	uint16_t diff_black;
-	uint16_t diff_steel;
-	uint16_t diff_aluminum;
-
-	if(m == 0)
+	uint16_t diff = 0xFF;
+	uint16_t sm_diff = 0xFF;
+	int i=0;
+	for(i=0;i<4;i++)
 	{
-		diff_white = abs(calibration_vals[WHITE] - r);
-		diff_black = abs(calibration_vals[BLACK] - r);
-		if(diff_white < diff_black) 
-		{
-			type = WHITE;
-			sorted_items_array[WHITE]++;
-		}
-		else 
-		{
-			type = BLACK;
-			sorted_items_array[BLACK]++;
-		}
+		diff = abs(calibration_vals[i] - r);
+		if (diff < sm_diff ) type = i;
 	}
 	
-	if(m == 1)
-	{
-		diff_aluminum = abs(calibration_vals[ALUMINUM] - r);
-		diff_steel = abs(calibration_vals[STEEL] - r);
-		if(diff_aluminum < diff_steel) 
-		{
-			type = ALUMINUM;
-			sorted_items_array[ALUMINUM]++;
-		}
-		else 
-		{
-			type = STEEL;
-			sorted_items_array[STEEL]++;
-		}
-	}
+	sorted_items_array[type]++;
+	sorted_items_array[TOTAL]++;
 	item_to_classify->type = type;
 	item_to_classify->stage = 3;
 	
-	sorted_items_array[TOTAL]++;
 	enqueue(classifiedList, item_to_classify);
 	
 	//TESTING
@@ -544,7 +522,7 @@ void classify_item(){
 void exit_sensor(){
 	OS3_flag = 0;
 	// Show sensor triggered
-	PORTC |= 0x80;
+	//PORTC |= 0x80;
 	// Move item to sorted queue
 	enqueue(sortedList, dequeue(classifiedList));
 }
@@ -588,8 +566,9 @@ int main(void)
 	// Main Program
 	while (1)
 	{
+		//PORTC = EIFR;
 		if(OS1_flag) entry_sensor();
-		if(FER_flag) metal_sensor();
+		//if(FER_flag) metal_sensor();
 		if(OS2_flag) reflective_sensor();
 		if(item_ready) classify_item();
 		if(OS3_flag) 
