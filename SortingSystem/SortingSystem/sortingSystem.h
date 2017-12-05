@@ -15,5 +15,8 @@
 // Display
 void display_reflective_reading(uint16_t value);
 
+// Sensor Functions
+void reflective_sensor();
+
 
 #endif /* SORTINGSYSTEM_H_ */

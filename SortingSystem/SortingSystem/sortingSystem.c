@@ -129,6 +129,11 @@ ISR(INT2_vect){
 	OS2_flag = 1;
 	if(reflective_present) reflective_present= 0;
 	else reflective_present = 1;
+	if(STATE == CALIBRATION)
+	{
+		reflective_sensor();
+	}
+	
 }
 
 // Optical sensor - exit position (PD3)
@@ -542,20 +547,21 @@ int main(void)
 	init_motor();
 	init_interrupts();
 	init_stepper();
-	sei();
-
-	// Calibrate ADC before program starts
-
-	//ADC_calibrate();
-
-	STATE = OPERATIONAL;
-	item_waiting = 0;
-	item_number = 0;
-	
 	entryList = initQueue();
 	reflectiveList = initQueue();
 	classifiedList = initQueue();
 	sortedList = initQueue();
+	sei();
+
+	// Calibrate ADC before program starts
+
+	ADC_calibrate();
+/*
+	STATE = OPERATIONAL;
+	item_waiting = 0;
+	item_number = 0;
+	
+
 	
 	// Main Program
 	while (1)
@@ -572,11 +578,13 @@ int main(void)
 		}
 			
 	}//while
-	
+	*/
 	clearQueue(entryList);
 	clearQueue(reflectiveList);
 	clearQueue(classifiedList);
 	clearQueue(sortedList);
+	
+	
 	return 0;
 }//main
 
