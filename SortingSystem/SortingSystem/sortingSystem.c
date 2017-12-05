@@ -81,28 +81,30 @@ uint8_t step_CCW[] = {STEP4, STEP3, STEP2, STEP1};
 uint8_t motor_direction = CW;
 
 // State and Control Variables
-volatile uint8_t STATE;
-volatile uint8_t item_ready;
-volatile uint8_t item_waiting;
-volatile uint8_t item_number;
-volatile uint8_t OS1_flag;
-volatile uint8_t OS2_flag;
-volatile uint8_t OS3_flag;
-volatile uint8_t FER_flag;
-volatile uint8_t ADC_flag;
+volatile uint8_t STATE = CALIBRATION;
+volatile uint8_t item_ready = 0;
+volatile uint8_t item_waiting = 0;
+volatile uint8_t item_number = 0;
+volatile uint8_t OS1_flag = 0;
+volatile uint8_t OS2_flag = 0;
+volatile uint8_t OS3_flag = 0;
+volatile uint8_t FER_flag = 0;
+volatile uint8_t ADC_flag = 0;
 volatile uint8_t pause_entered = 0;
 volatile uint8_t ramp_down_entered = 0;
 volatile uint8_t operational_entered = 0;
 
 // Timer Variables
 volatile uint16_t timer3_1sec = 0x3D09;	// 15625 cycles
-volatile uint16_t timer1_half_conveyor = 0;	// TODO!!!
-
+volatile uint8_t timer3_flag = 0;
 
 //Sorted Parts: white, steel, black, aluminum, total
-volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
+//volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
+	volatile uint8_t* sorted_items_array[5] = {1, 2, 3, 4, 0}; 
 	
-
+// Display
+//volatile uint8_t *display = sorted_items_array;
+volatile uint8_t display_index = 0;
 
 //##############	ISRs	##############//
 ISR(TIMER0_COMPA_vect){
@@ -112,8 +114,9 @@ ISR(TIMER0_COMPA_vect){
 
 ISR(TIMER3_COMPA_vect){
 	// testing
-	PORTC = ~PORTC;
+	//PORTC = ~PORTC;
 	
+	timer3_flag = 1;
 	return;
 }
 
@@ -147,10 +150,11 @@ ISR(INT4_vect) {
 	} else if (STATE == PAUSED) {
 		operational_entered = 1;
 		STATE = OPERATIONAL;
+		display_index = 0;
 	}
 	
 	// testing
-	PORTC = STATE;
+	//PORTC = STATE;
 }
 
 // Ramp down button
@@ -617,6 +621,10 @@ void exit_sensor(){
 	init_motor();
 }
 
+void display_pieces(uint8_t type, uint8_t amount) {
+	PORTC = (type << 4) + amount;
+}
+
 //##############	Main Program	##############//
 
 int main(void)
@@ -698,14 +706,37 @@ int main(void)
 				start_timer3(timer3_1sec);
 			}
 			
+			// Update display
+			if (timer3_flag) {
+				timer3_flag = 0;
+				// Display: | Al Bl St Wh x x x x |
+				display_pieces((1 << display_index), sorted_items_array[display_index]);
+				
+				if (display_index == 3) {
+					display_index = 0;
+				} else {
+					display_index++;
+				}
+			}
+			
 			
 		} else if (STATE == RAMP_DOWN) {
 			// Check if RAMP_DOWN just entered
 			if (ramp_down_entered) {
 				ramp_down_entered = 0;
 				
-				// Free queue resources
+				
 			}
+			
+			
+			if (timer3_flag) {	// Dont reset this flag here! 
+				
+				// If no items in any queue, turn off system
+					// Free queue resources
+				
+				// else keep processing pieces left
+			}
+				
 		}	
 		
 		
