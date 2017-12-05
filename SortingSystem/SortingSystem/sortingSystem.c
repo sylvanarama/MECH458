@@ -90,6 +90,9 @@ volatile uint8_t OS2_flag;
 volatile uint8_t OS3_flag;
 volatile uint8_t FER_flag;
 volatile uint8_t ADC_flag;
+volatile uint8_t pause_entered = 0;
+volatile uint8_t ramp_down_entered = 0;
+
 
 //Sorted Parts: white, steel, black, aluminum, total
 volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
@@ -129,6 +132,27 @@ ISR(INT3_vect){
 	OS3_flag = 1;
 }
 
+// Pause button
+ISR(INT4_vect) {
+	if (STATE == OPERATIONAL) {
+		pause_entered = 1;
+		STATE = PAUSED;
+	} else if (STATE == PAUSED) {
+		STATE = OPERATIONAL;
+	}
+	
+	// testing
+	PORTC = STATE;
+}
+
+// Ramp down button
+ISR(INT5_vect) {
+	ramp_down_entered = 1;
+	STATE = RAMP_DOWN;	// Can't leave this state
+	
+	// testing
+	PORTC = STATE;
+}
 
 //Interrupt when ADC finished
 ISR(ADC_vect)
@@ -163,8 +187,12 @@ void init_interrupts(){
 	// INT3 (OS3) - Falling edge
 	EICRA = 0x9A;
 	
-	// Enable external interrupts for Port D
-	EIMSK |= 0x0F;
+	// INT4 (Pause Button)		-	 Falling edge
+	// INT5 (Ramp Down Button)	-	 Falling edge
+	EICRB = 0x0A; 
+	
+	// Enable external interrupts for Port D & PortE5:4
+	EIMSK |= 0x3F;
 }
 
 // Initialize PWM on Timer0
@@ -352,7 +380,7 @@ void ADC_calibrate(){
 			while(!item_ready) {}
 			
 			// testing
-			PORTC = (char)(i+1);
+			//PORTC = (char)(i+1);
 			//PORTC = ADC_lowest_val;
 			//display_reflective_reading(ADC_lowest_val);
 			
@@ -360,7 +388,7 @@ void ADC_calibrate(){
 			ADC_lowest_val = 0x3FF;
 			item_ready = 0;
 		}
-		PORTC = 0xFF; //signal that all 10 values have been read
+		//PORTC = 0xFF; //signal that all 10 values have been read
 		
 		// testing
 		//update_motor_speed(0);
@@ -426,7 +454,7 @@ void ADC_calibrate(){
 
 void entry_sensor()
 {
-	PORTC = 0x10;
+	//PORTC = 0x10;
 	OS1_flag = 0;
 	// To keep track of how many items have been added
 	item_number++;
@@ -442,12 +470,12 @@ void metal_sensor(){
 	//If this interrupt fires, then the object is metal
 	FER_flag = 0;
 	entryList->tail->metal = 1;
-	PORTC |= 0x20;
+	//PORTC |= 0x20;
 }
 
 void reflective_sensor(){
 	OS2_flag = 0;
-	PORTC |= 0x40;
+	//PORTC |= 0x40;
 	//object entering reflective sensor zone, start ADC conversion
 	if(reflective_present)
 	{
@@ -529,14 +557,14 @@ void classify_item(){
 	enqueue(classifiedList, item_to_classify);
 	
 	//TESTING
-	PORTC |= item_to_classify->type;
+	//PORTC |= item_to_classify->type;
 	
 }//classify_item
 
 void exit_sensor(){
 	OS3_flag = 0;
 	// Show sensor triggered
-	PORTC |= 0x80;
+	//PORTC |= 0x80;
 	// Brake motor
 	PORTB = 0x00;
 	// Move item to sorted queue
@@ -586,14 +614,39 @@ int main(void)
 	// Main Program
 	while (1)
 	{
-		if(OS1_flag) entry_sensor();
-		if(FER_flag) metal_sensor();
-		if(OS2_flag) reflective_sensor();
-		if(item_ready) classify_item();
-		if(OS3_flag) 
-		{
-			exit_sensor();
+		// testing
+		PORTC = STATE;
+		
+		if (STATE == OPERATIONAL) {
+			if(OS1_flag) 
+				entry_sensor();
+			if(FER_flag) 
+				metal_sensor();
+			if(OS2_flag) 
+				reflective_sensor();
+			if(item_ready) 
+				classify_item();
+			if(OS3_flag) 
+			{
+				exit_sensor();
+			}
+			
+		} else if (STATE == PAUSED) {
+			// Check if just entering PAUSED
+			if (pause_entered) {
+				pause_entered = 0;
+			}
+			
+			
+		} else if (STATE == RAMP_DOWN) {
+			// Check if RAMP_DOWN just entered
+			if (ramp_down_entered) {
+				ramp_down_entered = 0;
+				
+				// Free queue resources
+			}
 		}
+		
 		
 			
 	}//while
