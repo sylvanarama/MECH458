@@ -37,7 +37,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0x70	//0XE0
+#define MOTOR_SPEED				0x30	//0x70	//0XE0
 
 // Stepper
 #define STEP1 0x35
@@ -60,7 +60,7 @@ volatile uint16_t cal_vals_final[4][4];
 volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
 
 //Queue
-queue* itemList;
+//queue* itemList;
 queue* entryList;
 queue* reflectiveList;
 queue* classifiedList;
@@ -99,8 +99,8 @@ volatile uint16_t timer3_1sec = 0x3D09;	// 15625 cycles
 volatile uint8_t timer3_flag = 0;
 
 //Sorted Parts: white, steel, black, aluminum, total
-//volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
-	volatile uint8_t* sorted_items_array[5] = {1, 2, 3, 4, 0}; 
+volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
+	//volatile uint8_t* sorted_items_array[5] = {1, 2, 3, 4, 0};	// testing
 	
 // Display
 //volatile uint8_t *display = sorted_items_array;
@@ -668,19 +668,29 @@ int main(void)
 		// testing
 		//PORTC = STATE;
 		
-		if (STATE == OPERATIONAL) {
+		// When we trigger ramp down button stay in OPERATIONAL for time of half conveyor
+		if (ramp_down_entered) {
+			ramp_down_entered = 0;
+			
+			if (STATE == PAUSED) {
+				STATE = OPERATIONAL;
+			}
+			
+			start_timer3(timer3_1sec);		// Good for MOTOR_SPEED = 0x30
+		}
+		
+		if (STATE == OPERATIONAL || RAMP_DOWN) {
+			
+			// Entered OPERATIONAL from PAUSED
 			if (operational_entered) {
 				// start motor
 				PORTB =  CW;
 				
 				// Disable timer
-				//PRR0 |= 0x20;		// PRTIM0 = 1 disables timer module
 				TIMSK3 &= 0xFD;
-				
-				// testing
-				PORTC |= 0x80;
 			}	
 			
+			// Handle flags from sensors
 			if(OS1_flag) 
 				entry_sensor();
 			if(FER_flag) 
@@ -690,11 +700,12 @@ int main(void)
 			if(item_ready) 
 				classify_item();
 			if(OS3_flag) 
-			{
 				exit_sensor();
-			}
 			
-		} else if (STATE == PAUSED) {
+		}
+		
+		if (STATE == PAUSED) {
+			
 			// Check if just entering PAUSED
 			if (pause_entered) {
 				pause_entered = 0;
@@ -709,6 +720,7 @@ int main(void)
 			// Update display
 			if (timer3_flag) {
 				timer3_flag = 0;
+				
 				// Display: | Al Bl St Wh x x x x |
 				display_pieces((1 << display_index), sorted_items_array[display_index]);
 				
@@ -717,24 +729,38 @@ int main(void)
 				} else {
 					display_index++;
 				}
+			}			
+		} 
+		
+		if (STATE == RAMP_DOWN) {
+			
+			if (timer3_flag) {	
+				timer3_flag = 0;
+				
+				// Disable timer
+				TIMSK3 &= 0xFD;
 			}
 			
-			
-		} else if (STATE == RAMP_DOWN) {
-			// Check if RAMP_DOWN just entered
-			if (ramp_down_entered) {
-				ramp_down_entered = 0;
+			// If no items in any queue, turn off system
+			if (isEmpty(entryList) &&
+				isEmpty(reflectiveList) &&
+				isEmpty(classifiedList) &&
+				isEmpty(sortedList)) {
 				
+				// Turn off motor
+				PORTB = 0;
 				
-			}
-			
-			
-			if (timer3_flag) {	// Dont reset this flag here! 
+				// Disable ADC
+				ADCSRA &= ~_BV(ADEN);
 				
-				// If no items in any queue, turn off system
-					// Free queue resources
+				// Disable interrupts
+				cli();
 				
-				// else keep processing pieces left
+				// Release resources
+				clearQueue(entryList);
+				clearQueue(reflectiveList);
+				clearQueue(classifiedList);
+				clearQueue(sortedList);
 			}
 				
 		}	
@@ -743,10 +769,6 @@ int main(void)
 			
 	}//while
 	
-	clearQueue(entryList);
-	clearQueue(reflectiveList);
-	clearQueue(classifiedList);
-	clearQueue(sortedList);
 	return 0;
 }//main
 
