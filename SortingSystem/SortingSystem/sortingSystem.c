@@ -88,10 +88,10 @@ uint8_t step_CCW[] = {STEP4, STEP3, STEP2, STEP1};
 uint8_t motor_direction = CW;
 
 // State and Control Variables
-volatile uint8_t STATE;
-volatile uint8_t item_ready;
-volatile uint8_t item_waiting;
-volatile uint8_t item_number;
+volatile uint8_t STATE = CALIBRATION;
+volatile uint8_t item_ready = 0;
+volatile uint8_t item_waiting = 0;
+volatile uint8_t item_number = 0;
 
 //##############	ISRs	##############//
 ISR(TIMER0_COMPA_vect){
@@ -143,8 +143,9 @@ ISR(INT2_vect){
 			reflective_sensor_item->reflective = ADC_lowest_val;
 			reflective_sensor_item->stage = 2;	
 			enqueue(reflectiveList, reflective_sensor_item);
+			ADC_lowest_val = 0x3FF;
 		}
-		ADC_lowest_val = 0x3FF;
+
 		reflective_present = 0;
 		item_ready = 1;
 	}
@@ -477,8 +478,7 @@ void adc_calibrate(){
 		}
 		PORTC = 0xFF; //signal that all 10 values have been read
 		
-		// testing
-		update_motor_speed(0);
+		PORTB = 0x00;
 		
 		mTimer(100);
 		// calculate the minimum, maximum, median, and mean of the 10 values
@@ -533,7 +533,7 @@ void adc_calibrate(){
 		display_reflective_reading(avg);
 		mTimer(7000);
 		
-		update_motor_speed(MOTOR_SPEED);
+		PORTB = CW;
 	}
 }//ADC_calibrate
 
@@ -559,17 +559,18 @@ int main(void)
 	init_motor();
 	init_interrupts();
 	init_stepper();
-	sei();
-
-	// Calibrate ADC before program starts
-
-	//adc_calibrate();
-
 	entryList = initQueue();
 	reflectiveList = initQueue();
 	classifiedList = initQueue();
 	sortedList = initQueue();
+	sei();
 
+	// Calibrate ADC before program starts
+
+	adc_calibrate();
+
+
+	/*
 	STATE = OPERATIONAL;
 	item_waiting = 0;	
 	item_number = 0;
@@ -588,7 +589,7 @@ int main(void)
 		}
 		
 	}//while
-	
+	*/
 	clearQueue(entryList);
 	clearQueue(reflectiveList);
 	clearQueue(classifiedList);
