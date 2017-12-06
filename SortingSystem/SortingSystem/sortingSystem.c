@@ -131,7 +131,7 @@ ISR(TIMER0_COMPA_vect){
 
 ISR(TIMER3_COMPA_vect){
 	// testing
-	//PORTC |= 0x04;
+	PORTC |= 0x04;
 	
 	timer3_flag = 1;
 	
@@ -199,7 +199,7 @@ ISR(INT5_vect) {
 	
 	
 	// testing
-	//PORTC = 0x01;
+	PORTC = 0x01;
 }
 
 //Interrupt when ADC finished
@@ -772,7 +772,7 @@ int main(void)
 		// When we trigger ramp down button stay in OPERATIONAL for time of half conveyor
 		if (STATE_TRANSITION == RAMP_DOWN_ENTERED) {
 			// testing
-			//PORTC |= 0x02;
+			PORTC |= 0x02;
 			
 			STATE_TRANSITION = NONE;
 			//ramp_down_entered = 0;
@@ -853,7 +853,7 @@ int main(void)
 		
 		if (STATE == RAMP_DOWN) {
 			// testing
-			//PORTC |= 0x08;
+			PORTC |= 0x08;
 			
 			if (timer3_flag) {	
 				timer3_flag = 0;
