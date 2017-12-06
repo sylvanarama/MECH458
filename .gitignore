@@ -1,0 +1,7 @@
+
+*.elf
+SortingSystem/SortingSystem/Debug/SortingSystem.hex
+SortingSystem/SortingSystem/Debug/SortingSystem.lss
+*.map
+*.o
+*.srec
