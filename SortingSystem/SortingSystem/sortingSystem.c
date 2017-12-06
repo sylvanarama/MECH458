@@ -37,7 +37,11 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
+<<<<<<< HEAD
 #define MOTOR_SPEED				0x30	//0XE0
+=======
+#define MOTOR_SPEED				0x50	//0x70	//0XE0
+>>>>>>> PauseImplementation
 
 // Stepper
 #define STEP1 0x35
@@ -57,12 +61,19 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 // Calibration
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
+<<<<<<< HEAD
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
 
 // Station 4 2pm: white min, steel avg, black max, aluminum min	
 volatile uint16_t calibration_vals[4] = {746, 620, 779, 438};	
 
 //Queue
+=======
+//volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
+volatile uint16_t calibration_vals[4] = {730, 760, 750, 600};	// Stn 3
+//Queue
+//queue* itemList;
+>>>>>>> PauseImplementation
 queue* entryList;
 queue* reflectiveList;
 queue* classifiedList;
@@ -90,13 +101,29 @@ volatile uint8_t item_number = 0;
 volatile uint8_t OS1_flag = 0;
 volatile uint8_t OS2_flag = 0;
 volatile uint8_t OS3_flag = 0;
+<<<<<<< HEAD
 //volatile uint8_t FER_flag;
 volatile uint8_t ADC_flag = 0;
+=======
+volatile uint8_t FER_flag = 0;
+volatile uint8_t ADC_flag = 0;
+volatile uint8_t pause_entered = 0;
+volatile uint8_t ramp_down_entered = 0;
+volatile uint8_t processing_for_ramp_down = 0;
+volatile uint8_t operational_entered = 0;
+
+// Timer Variables
+volatile uint16_t timer3_1sec = 0x3D09;	// 15625 cycles
+volatile uint8_t timer3_flag = 0;
+>>>>>>> PauseImplementation
 
 //Sorted Parts: white, steel, black, aluminum, total
 volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
+	//volatile uint8_t* sorted_items_array[5] = {1, 2, 3, 4, 0};	// testing
 	
-
+// Display
+//volatile uint8_t *display = sorted_items_array;
+volatile uint8_t display_index = 0;
 
 //##############	ISRs	##############//
 ISR(TIMER0_COMPA_vect){
@@ -104,8 +131,16 @@ ISR(TIMER0_COMPA_vect){
 	return;
 }
 
-ISR(TIMER1_COMPA_vect){
-	// TODO: Implement ISR
+ISR(TIMER3_COMPA_vect){
+	// testing
+	//PORTC |= 0x04;
+	
+	timer3_flag = 1;
+	
+	if (processing_for_ramp_down) {
+		STATE = RAMP_DOWN;
+	}
+	
 	return;
 }
 
@@ -142,6 +177,31 @@ ISR(INT3_vect){
 	OS3_flag = 1;
 }
 
+// Pause button
+ISR(INT4_vect) {
+	if (STATE == OPERATIONAL) {
+		pause_entered = 1;
+		STATE = PAUSED;
+	} else if (STATE == PAUSED) {
+		operational_entered = 1;
+		STATE = OPERATIONAL;
+		display_index = 0;
+	}
+	
+	// testing
+	//PORTC = STATE;
+}
+
+// Ramp down button
+ISR(INT5_vect) {
+	ramp_down_entered = 1;
+	processing_for_ramp_down = 1;
+	//STATE = RAMP_DOWN;	// Can't leave this state
+	
+	
+	// testing
+	//PORTC = 0x01;
+}
 
 //Interrupt when ADC finished
 ISR(ADC_vect)
@@ -176,8 +236,17 @@ void init_interrupts(){
 	// INT3 (OS3) - Falling edge
 	EICRA = 0x92;
 	
+<<<<<<< HEAD
 	// Enable external interrupts for Port D
 	EIMSK |= 0x3D;
+=======
+	// INT4 (Pause Button)		-	 Falling edge
+	// INT5 (Ramp Down Button)	-	 Falling edge
+	EICRB = 0x0A; 
+	
+	// Enable external interrupts for Port D & PortE5:4
+	EIMSK |= 0x3F;
+>>>>>>> PauseImplementation
 }
 
 // Initialize PWM on Timer0
@@ -191,6 +260,39 @@ void init_timer0_pwm() {
 	
 	// Set value we want timer to reset at (MAX)
 	OCR0A = 0x80; // Duty cycle = 50%
+}
+
+// Initialize Timer1 for PAUSE and RAMP_DOWN states
+void init_timer3() {
+		// Set Waveform Generation Mode WGM3:0 
+			// Clear timer on Compare Match Mode (WGM3:0 = 4 for OCRnA or 12 for ICRn)
+		TCCR3B |= 0x0B;		// Set WGM3:2 for CTC mode - 0b01
+							// Set Clock Source (CS2:0 - 64 bit prescaler - 0b011)
+		
+		// Set TOP value (what counter counts to)
+		/*OCR1A =	0x03e8;	
+		
+		// Timer initial value to 0
+		TCNT1 = 0x0000;	*/
+		
+		TIMSK3 |= 0x02;		// Enable interrupts on Channel A - OCFnA flag in TIFRn register is set
+		TIFR3 |= 0x02;		// clear output compare flag -> do this in start_timer?
+		
+		// Disable timer 
+		//PRR0 |= 0x20;		// PRTIM0 = 1 disables timer module
+		TIMSK3 &= 0xFD;
+}
+
+void start_timer3(uint16_t top) {
+	// Enable timer
+	//PRR0 &= 0xDF;	// PRTIM0 = 0 enables timer module
+	TIMSK3 |= 0x02;
+	
+	// Timer initial value
+	TCNT3 = 0x0000;
+	
+	// Value timer counts to 
+	OCR3A = top;
 }
 
 // Start the motor when program starts
@@ -365,7 +467,7 @@ void ADC_calibrate(){
 			while(!item_ready) {}
 			
 			// testing
-			PORTC = (char)(i+1);
+			//PORTC = (char)(i+1);
 			//PORTC = ADC_lowest_val;
 			//display_reflective_reading(ADC_lowest_val);
 			
@@ -373,7 +475,7 @@ void ADC_calibrate(){
 			ADC_lowest_val = 0x3FF;
 			item_ready = 0;
 		}
-		PORTC = 0xFF; //signal that all 10 values have been read
+		//PORTC = 0xFF; //signal that all 10 values have been read
 		
 		// testing
 		//update_motor_speed(0);
@@ -438,7 +540,7 @@ void ADC_calibrate(){
 
 void entry_sensor()
 {
-	PORTC = 0x10;
+	//PORTC = 0x10;
 	OS1_flag = 0;
 	// To keep track of how many items have been added
 	item_number++;
@@ -448,6 +550,8 @@ void entry_sensor()
 	newItem->stage = 1;
 	enqueue(entryList, newItem);
 	//PORTC = entryList->tail->number;
+	PORTC = size(entryList);
+	PORTC |= 0x80;
 }
 /*
 void metal_sensor(){
@@ -489,6 +593,10 @@ void reflective_sensor(){
 			ADC_lowest_val = 0x3FF;
 		}
 		item_ready = 1;
+		
+		// testing
+		PORTC = size(reflectiveList);
+		PORTC |= 0x40;
 	}
 }
 
@@ -514,7 +622,9 @@ void classify_item(){
 	enqueue(classifiedList, item_to_classify);
 	
 	//TESTING
-	PORTC |= item_to_classify->type;
+	//PORTC |= item_to_classify->type;
+	PORTC = size(classifiedList);
+	PORTC |= 0x20;
 	
 }//classify_item
 
@@ -522,8 +632,27 @@ void exit_sensor(){
 	OS3_flag = 0;
 	// Show sensor triggered
 	//PORTC |= 0x80;
+<<<<<<< HEAD
 	// Move item to sorted queue
 	enqueue(sortedList, dequeue(classifiedList));
+=======
+	// Brake motor
+	PORTB = 0x00;
+	// Move item to sorted queue
+	enqueue(sortedList, dequeue(classifiedList));
+	//move stepper to correct position
+	stepper_position((sortedList->tail->type)+1);
+	// start motor again
+	init_motor();
+	
+	// testing
+	PORTC = size(sortedList);
+	PORTC |= 0x10;
+}
+
+void display_pieces(uint8_t type, uint8_t amount) {
+	PORTC = (type << 4) + amount;
+>>>>>>> PauseImplementation
 }
 
 //##############	Main Program	##############//
@@ -544,6 +673,7 @@ int main(void)
 	cli();
 	init_ADC();
 	init_timer0_pwm();
+	init_timer3();
 	init_motor();
 	init_interrupts();
 	init_stepper();
@@ -566,6 +696,7 @@ int main(void)
 	// Main Program
 	while (1)
 	{
+<<<<<<< HEAD
 		//PORTC = EIFR;
 		if(OS1_flag) entry_sensor();
 		//if(FER_flag) metal_sensor();
@@ -584,6 +715,116 @@ int main(void)
 	clearQueue(classifiedList);
 	clearQueue(sortedList);
 	
+=======
+		// testing
+		//PORTC = STATE;
+		
+		// When we trigger ramp down button stay in OPERATIONAL for time of half conveyor
+		if (ramp_down_entered) {
+			// testing
+			//PORTC |= 0x02;
+			
+			ramp_down_entered = 0;
+			
+			if (STATE == PAUSED) {
+				STATE = OPERATIONAL;
+			}
+			
+			start_timer3(timer3_1sec);		// Good for MOTOR_SPEED = 0x30
+		}
+		
+		if (STATE == OPERATIONAL || RAMP_DOWN) {
+			
+			// Entered OPERATIONAL from PAUSED
+			if (operational_entered) {
+				// start motor
+				PORTB =  CW;
+				
+				// Disable timer
+				TIMSK3 &= 0xFD;
+			}	
+			
+			// Handle flags from sensors
+			if(OS1_flag) 
+				entry_sensor();
+			if(FER_flag) 
+				metal_sensor();
+			if(OS2_flag) 
+				reflective_sensor();
+			if(item_ready) 
+				classify_item();
+			if(OS3_flag) 
+				exit_sensor();
+			
+		}
+		
+		if (STATE == PAUSED) {
+			
+			// Check if just entering PAUSED
+			if (pause_entered) {
+				pause_entered = 0;
+				
+				// turn off motor
+				PORTB =  0;
+				
+				// start timer for 1 sec
+				start_timer3(timer3_1sec);
+			}
+			
+			// Update display
+			if (timer3_flag) {
+				timer3_flag = 0;
+				
+				// Display: | Al Bl St Wh x x x x |
+				display_pieces((1 << display_index), sorted_items_array[display_index]);
+				
+				if (display_index == 3) {
+					display_index = 0;
+				} else {
+					display_index++;
+				}
+			}			
+		} 
+		
+		if (STATE == RAMP_DOWN) {
+			// testing
+			//PORTC |= 0x08;
+			
+			if (timer3_flag) {	
+				timer3_flag = 0;
+				
+				// Disable timer
+				TIMSK3 &= 0xFD;
+			}
+			
+			// If no items in any queue, turn off system
+			if (isEmpty(entryList) &&
+				isEmpty(reflectiveList) &&
+				isEmpty(classifiedList) /*&&
+				isEmpty(sortedList)*/) {
+				
+				// Turn off motor
+				PORTB = 0;
+				
+				// Disable ADC
+				ADCSRA &= ~_BV(ADEN);
+				
+				// Disable interrupts
+				cli();
+				
+				// Release resources
+				clearQueue(entryList);
+				clearQueue(reflectiveList);
+				clearQueue(classifiedList);
+				clearQueue(sortedList);
+			}
+				
+		}	
+		
+		
+			
+	}//while
+>>>>>>> PauseImplementation
 	
 	return 0;
 }//main
