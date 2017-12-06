@@ -54,7 +54,7 @@
 #define TURN_180 100
 
 // Types
-enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper tray order
+enum item_types {WHITE, ALUMINUM, BLACK, STEEL, TOTAL}; // to align with stepper tray order
 
 //##############GLOBAL VARIABLES##############//
 
@@ -120,7 +120,7 @@ volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0};
 	
 // Display
 //volatile uint8_t *display = sorted_items_array;
-volatile uint8_t display_type[4] = {0x01, 0x02, 0x04, 0x08};
+volatile uint8_t display_type[5] = {0x01, 0x02, 0x04, 0x08};
 volatile uint8_t display_index = 0;
 
 //##############	ISRs	##############//
@@ -742,6 +742,16 @@ int main(void)
 	// Calibrate ADC before program starts
 
 	//ADC_calibrate();
+	
+/*	uint8_t stepper_pos[10] = {4, 2, 1, 3, 1, 2, 4, 3, 1, 2};
+	int i = 0;
+	
+	while (i < 10) {
+		PORTC = i;
+		stepper_position(stepper_pos[i]);
+		mTimer(1000);
+		i++;
+	}*/
 
 	entryList = initQueue();
 	reflectiveList = initQueue();
@@ -772,6 +782,7 @@ int main(void)
 		}
 		
 		if (STATE == OPERATIONAL || RAMP_DOWN) {
+			//PORTC = 0x00;
 			
 			// Entered OPERATIONAL from PAUSED
 			if (STATE_TRANSITION == OPERATIONAL_ENTERED) {
@@ -797,6 +808,9 @@ int main(void)
 		}
 		
 		if (STATE == PAUSED) {
+			// testing
+			//PORTC = (size(classifiedList) << 6) + (size(reflectiveList) << 3) + size(entryList);
+
 			
 			// Check if just entering PAUSED
 			if (STATE_TRANSITION == PAUSE_ENTERED) {
@@ -816,13 +830,22 @@ int main(void)
 				
 				// Display: | Al Bl St Wh x x x x |
 				//display_pieces((1 << display_index), sorted_items_array[display_index]);
-				display_pieces(display_type[display_index], sorted_items_array[display_index]);
+				//display_pieces(display_type[display_index], sorted_items_array[display_index]);
 				
-				if (display_index == 3) {
+				
+				
+				if (display_index == 4) {
+					// Get number of items still on conveyor belt
+					int remaining_items = size(classifiedList); // gets size of all queues cuz they're linked!!
+					
+					// + size(reflectiveList) + size(classifiedList);
+					
+					display_pieces(0xff, remaining_items);
 					display_index = 0;
 				} else {
+					display_pieces(display_type[display_index], sorted_items_array[display_index]);
 					display_index++;
-				}
+				}	
 			}			
 		} 
 		

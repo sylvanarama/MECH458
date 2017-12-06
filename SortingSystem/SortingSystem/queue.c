@@ -50,11 +50,15 @@ void enqueue(queue* q, item* newItem){
 */
 item* dequeue(queue* q){
 	item* deQueuedItem = q->head;	// Will set to NULL if Head points to NULL
+	
 	/* Ensure it is not an empty queue */
 	if (q->head != NULL){
 		q->head = q->head->next;
 	}/*if*/
 	if(q->head == NULL) q->tail = NULL; // if that was the last element in the queue, set tail to NULL as well
+	
+	//deQueuedItem->next = NULL;
+	
 	return deQueuedItem;
 }/*dequeue*/
 
