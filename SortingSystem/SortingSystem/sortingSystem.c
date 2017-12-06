@@ -59,12 +59,12 @@ volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
 volatile uint16_t calibration_vals[4] = {730, 760, 750, 600};	// Stn 3
+
 //Queue
-//queue* itemList;
 queue* entryList;
 queue* reflectiveList;
 queue* classifiedList;
-queue* sortedList;
+
 
 // ADC variables
 volatile uint16_t ADC_result;
@@ -394,7 +394,6 @@ void stepper_position(uint8_t new_position){
 	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CLOCKWISE);
 
 	motor_position = new_position;
-	//init_motor();
 
 }//stepper_position
 
@@ -626,17 +625,18 @@ void exit_sensor(){
 	OS3_flag = 0;
 	// Show sensor triggered
 	//PORTC |= 0x80;
-	// Brake motor
+	
+	// Brake motor, move stepper, start motor
 	PORTB = 0x00;
-	// Move item to sorted queue
-	enqueue(sortedList, dequeue(classifiedList));
-	//move stepper to correct position
-	stepper_position((sortedList->tail->type)+1);
-	// start motor again
+	stepper_position((classifiedList->head->type)+1);
 	init_motor();
 	
+	// Pop and delete the classified item
+	item* popped_item = dequeue(classifiedList);
+	delete(popped_item);
+	
 	// testing
-	PORTC = size(sortedList);
+	PORTC = size(classifiedList);
 	PORTC |= 0x10;
 }
 
@@ -675,7 +675,6 @@ int main(void)
 	entryList = initQueue();
 	reflectiveList = initQueue();
 	classifiedList = initQueue();
-	sortedList = initQueue();
 
 	STATE = OPERATIONAL;
 	item_waiting = 0;
@@ -768,8 +767,7 @@ int main(void)
 			// If no items in any queue, turn off system
 			if (isEmpty(entryList) &&
 				isEmpty(reflectiveList) &&
-				isEmpty(classifiedList) /*&&
-				isEmpty(sortedList)*/) {
+				isEmpty(classifiedList)) {
 				
 				// Turn off motor
 				PORTB = 0;
@@ -784,7 +782,6 @@ int main(void)
 				clearQueue(entryList);
 				clearQueue(reflectiveList);
 				clearQueue(classifiedList);
-				clearQueue(sortedList);
 			}
 				
 		}	
