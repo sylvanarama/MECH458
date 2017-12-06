@@ -46,15 +46,15 @@
 #define MOTOR_SPEED				0x60	//0x70	//0XE0
 
 // Stepper
-#define STEP1 0x35
-#define STEP2 0x36
-#define STEP3 0x2E
-#define STEP4 0x2D
+#define STEP0 0x35
+#define STEP1 0x36
+#define STEP2 0x2E
+#define STEP3 0x2D
 #define TURN_90 50
 #define TURN_180 100
 
 // Types
-enum item_types {WHITE, ALUMINUM, BLACK, STEEL, TOTAL}; // to align with stepper tray order
+enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper tray order
 
 //##############GLOBAL VARIABLES##############//
 
@@ -62,7 +62,7 @@ enum item_types {WHITE, ALUMINUM, BLACK, STEEL, TOTAL}; // to align with stepper
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
-volatile uint16_t calibration_vals[4] = {776, 821, 50, 280};	// Stn 1
+volatile uint16_t calibration_vals[4] = {770, 100, 817, 20};	// Stn 1
 //Queue
 //queue* itemList;
 queue* entryList;
@@ -76,20 +76,19 @@ volatile uint16_t ADC_lowest_val;
 volatile uint8_t reflective_present;
 
 // Stepper variables
-volatile int motor_position;
-volatile int stepper_on;
-uint8_t step_CW[] = {STEP1, STEP2, STEP3, STEP4};
-uint8_t step_CCW[] = {STEP4, STEP3, STEP2, STEP1};
-uint8_t rotation_lookup_table[4][4] = {{	    0, TURN_90,	TURN_180,	TURN_90}, 
-									   {  TURN_90,	     0,  TURN_90,   TURN_180},
-									   { TURN_180, TURN_90,        0,    TURN_90},
-									   { TURN_90, TURN_180,  TURN_90,          0}};
-										   
+volatile int motor_position = 1;
+volatile int stepper_on = 0;
+uint8_t step_order[] = {STEP0, STEP1, STEP2, STEP3};
+uint8_t rotation_lookup_table[4][4] = {{	    0, TURN_90,	TURN_180,	TURN_90},
+{  TURN_90,	     0,  TURN_90,   TURN_180},
+{ TURN_180, TURN_90,        0,    TURN_90},
+{ TURN_90, TURN_180,  TURN_90,          0}};
+
 uint8_t direction_lookup_table[4][4] = {{	0, CW,	0,	CCW},
-                                       {  CCW,	0,  CW,   0},
-                                       {    0, CCW,   0,  CW},
-                                       {   CW,   0, CCW,   0}};
-									
+{  CCW,	0,  CW,   0},
+{    0, CCW,   0,  CW},
+{   CW,   0, CCW,   0}};
+
 	
 // Motor variables
 uint8_t motor_direction = CW;
@@ -333,7 +332,7 @@ void init_ADC(){
 // Set Port A to output (for stepper motor), initialize pins to Step 1 position, reset global variables
 void init_stepper(){
 	DDRA = 0xff;
-	PORTA = STEP1;
+	PORTA = STEP0;
 	motor_position = 1;
 	stepper_on = 0;
 }//stepperInit
@@ -397,45 +396,47 @@ void change_motor_direction() {
 }//change_motor_direction
 
 void stepper_rotate(int steps, int direction) {
-	int accel = 0;
-	int decel = 0;
-	int max_delay = 14;
+	int max_delay = 16;
 	int min_delay = 6;
 	int delay_diff = max_delay-min_delay;
 	int delay = max_delay;
 	static int stepnum = 0;
 	
 	int i;
-	for(i=0;i<steps;i++){
+	for(i=0;i<=steps;i++){
 		if(direction == CW)   stepnum = ((stepnum + 1) % 4);
 		if(direction == CCW) stepnum = ((stepnum - 1) % 4);
+		if(stepnum == -1) stepnum = 3;
+		//PORTA = step_CW[stepnum];
+		
 		switch(stepnum){
 			case(0):
-				PORTA = STEP1;
+				PORTA = STEP0;
 				mTimer(delay);
 				break;
 			case(1):
-				PORTA = STEP2;
+				PORTA = STEP1;
 				mTimer(delay);
 				break;
 			case(2):
-				PORTA = STEP3;
+				PORTA = STEP2;
 				mTimer(delay);
 				break;
 			case(3):
-				PORTA = STEP4;
+				PORTA = STEP3;
 				mTimer(delay);
 				break;
-			default: 
+			default:
 				break;
 		}//switch
-		if((i<delay_diff) && (delay >= min_delay))
+		
+		if((i<delay_diff) && (delay > min_delay))
 		{
 			// accel++;
 			// delay -= accel; // inc acceleration
 			delay--;
 		}
-		if(((steps - i) <= delay_diff) && (delay <= max_delay)) 
+		if(((steps - i) <= delay_diff) && (delay < max_delay))
 		{
 			//decel++;
 			//delay += decel; //deceleration
@@ -468,8 +469,8 @@ void stepper_position(uint8_t new_position){
 	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CW);
 
 	motor_position = new_position;
+	
 }//stepper_position
-
 
 void display_reflective_reading(uint16_t value) {
 	// Clear upper bits in PD2 and PD5
@@ -652,8 +653,8 @@ void classify_item(){
 
 	if(m == 0)
 	{
-		diff_white = abs(calibration_vals[0] - r);
-		diff_black = abs(calibration_vals[1] - r);
+		diff_white = abs(calibration_vals[WHITE] - r);
+		diff_black = abs(calibration_vals[BLACK] - r);
 		if(diff_white < diff_black) 
 		{
 			type = WHITE;
@@ -668,8 +669,8 @@ void classify_item(){
 	
 	if(m == 1)
 	{
-		diff_aluminum = abs(calibration_vals[2] - r);
-		diff_steel = abs(calibration_vals[3] - r);
+		diff_aluminum = abs(calibration_vals[ALUMINUM] - r);
+		diff_steel = abs(calibration_vals[STEEL] - r);
 		if(diff_aluminum < diff_steel) 
 		{
 			type = ALUMINUM;
