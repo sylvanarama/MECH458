@@ -43,7 +43,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0x70	//0x70	//0XE0
+#define MOTOR_SPEED				0x60	//0x70	//0XE0
 
 // Stepper
 #define STEP1 0x35
@@ -64,7 +64,7 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
-volatile uint16_t calibration_vals[4] = {800, 785, 100, 250};	// Stn 1
+volatile uint16_t calibration_vals[4] = {776, 821, 50, 280};	// Stn 1
 //Queue
 //queue* itemList;
 queue* entryList;
@@ -112,6 +112,7 @@ volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0};
 	
 // Display
 //volatile uint8_t *display = sorted_items_array;
+volatile uint8_t display_type[4] = {0x01, 0x02, 0x04, 0x08};
 volatile uint8_t display_index = 0;
 
 //##############	ISRs	##############//
@@ -164,13 +165,14 @@ ISR(INT4_vect) {
 	
 	if (STATE == OPERATIONAL) {
 		STATE_TRANSITION = PAUSE_ENTERED;
+		display_index = 0;
 		//pause_entered = 1;
 		STATE = PAUSED;
 	} else if (STATE == PAUSED) {
 		STATE_TRANSITION = OPERATIONAL_ENTERED;
 		//operational_entered = 1;
 		STATE = OPERATIONAL;
-		display_index = 0;
+		
 	}
 	
 	// testing
@@ -805,7 +807,8 @@ int main(void)
 				timer3_flag = 0;
 				
 				// Display: | Al Bl St Wh x x x x |
-				display_pieces((1 << display_index), sorted_items_array[display_index]);
+				//display_pieces((1 << display_index), sorted_items_array[display_index]);
+				display_pieces(display_type[display_index], sorted_items_array[display_index]);
 				
 				if (display_index == 3) {
 					display_index = 0;
