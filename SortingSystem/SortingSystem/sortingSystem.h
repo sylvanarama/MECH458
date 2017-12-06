@@ -11,6 +11,8 @@
 
 // Initializers
 
+// Sensor Handles
+void reflective_sensor();
 
 // Display
 void display_reflective_reading(uint16_t value);

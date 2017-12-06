@@ -43,7 +43,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0x50	//0x70	//0XE0
+#define MOTOR_SPEED				0x70	//0x70	//0XE0
 
 // Stepper
 #define STEP1 0x35
@@ -64,7 +64,7 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
-volatile uint16_t calibration_vals[4] = {730, 760, 750, 600};	// Stn 3
+volatile uint16_t calibration_vals[4] = {805, 788, 100, 250};	// Stn 1
 //Queue
 //queue* itemList;
 queue* entryList;
@@ -148,6 +148,8 @@ ISR(INT2_vect){
 	OS2_flag = 1;
 	if(reflective_present) reflective_present= 0;
 	else reflective_present = 1;
+	if(STATE == CALIBRATION)
+		reflective_sensor();
 }
 
 // Optical sensor - exit position (PD3)
@@ -173,8 +175,8 @@ ISR(INT4_vect) {
 	
 	// testing
 	//PORTC = STATE;
-	PORTC = STATE_TRANSITION;
-	PORTC |= STATE << 6;
+	//PORTC = STATE_TRANSITION;
+	//PORTC |= STATE << 6;
 }
 
 // Ramp down button
@@ -194,10 +196,18 @@ ISR(ADC_vect)
 {
 	if(reflective_present)
 	{
-		ADC_result = ADCH;
-		ADC_result = ((ADC_result << 8) | ADCL);
+		uint16_t low = ADCL;
+		uint16_t high = ADCH;
+		
+		ADC_result = (low ) + (high << 8 );
+		
 		if(ADC_result < ADC_lowest_val) ADC_lowest_val = ADC_result;
 		ADCSRA |= _BV(ADSC);
+		
+		/*ADC_result = ADCH;
+		ADC_result = ((ADC_result << 8) | ADCL);
+		if(ADC_result < ADC_lowest_val) ADC_lowest_val = ADC_result;
+		ADCSRA |= _BV(ADSC);	*/
 	}
 }
 
@@ -448,7 +458,7 @@ void ADC_calibrate(){
 			while(!item_ready) {}
 			
 			// testing
-			//PORTC = (char)(i+1);
+			PORTC = (char)(i+1);
 			//PORTC = ADC_lowest_val;
 			//display_reflective_reading(ADC_lowest_val);
 			
@@ -532,8 +542,8 @@ void entry_sensor()
 	newItem->stage = 1;
 	enqueue(entryList, newItem);
 	//PORTC = entryList->tail->number;
-	PORTC = size(entryList);
-	PORTC |= 0x80;
+	//PORTC = size(entryList);
+	//PORTC |= 0x80;
 }
 
 void metal_sensor(){
@@ -572,13 +582,13 @@ void reflective_sensor(){
 			reflective_sensor_item->reflective = ADC_lowest_val;
 			reflective_sensor_item->stage = 2;	
 			enqueue(reflectiveList, reflective_sensor_item);
+			ADC_lowest_val = 0x3FF;
 		}
-		ADC_lowest_val = 0x3FF;
 		item_ready = 1;
 		
 		// testing
-		PORTC = size(reflectiveList);
-		PORTC |= 0x40;
+		//PORTC = size(reflectiveList);
+		//PORTC |= 0x40;
 	}
 }
 
@@ -632,8 +642,8 @@ void classify_item(){
 	
 	//TESTING
 	//PORTC |= item_to_classify->type;
-	PORTC = size(classifiedList);
-	PORTC |= 0x20;
+	//PORTC = size(classifiedList);
+	//PORTC |= 0x20;
 	
 }//classify_item
 
@@ -651,8 +661,8 @@ void exit_sensor(){
 	init_motor();
 	
 	// testing
-	PORTC = size(sortedList);
-	PORTC |= 0x10;
+	//PORTC = size(sortedList);
+	//PORTC |= 0x10;
 }
 
 void display_pieces(uint8_t type, uint8_t amount) {
@@ -685,7 +695,7 @@ int main(void)
 
 	// Calibrate ADC before program starts
 
-	//ADC_calibrate();
+	ADC_calibrate();
 
 	entryList = initQueue();
 	reflectiveList = initQueue();
