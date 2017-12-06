@@ -122,6 +122,7 @@ volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0};
 //volatile uint8_t *display = sorted_items_array;
 volatile uint8_t display_type[5] = {0x01, 0x02, 0x04, 0x08};
 volatile uint8_t display_index = 0;
+volatile uint8_t cycle_through_display = 0;
 
 //##############	ISRs	##############//
 ISR(TIMER0_COMPA_vect){
@@ -136,6 +137,7 @@ ISR(TIMER3_COMPA_vect){
 	timer3_flag = 1;
 	
 	if (processing_for_ramp_down) {
+	//if (STATE_TRANSITION == RAMP_DOWN_ENTERED) {
 		STATE = RAMP_DOWN;
 	}
 	
@@ -837,7 +839,6 @@ int main(void)
 				if (display_index == 4) {
 					// Get number of items still on conveyor belt
 					int remaining_items = size(classifiedList); // gets size of all queues cuz they're linked!!
-					
 					// + size(reflectiveList) + size(classifiedList);
 					
 					display_pieces(0xff, remaining_items);
@@ -856,23 +857,42 @@ int main(void)
 			if (timer3_flag) {	
 				timer3_flag = 0;
 				
-				// Disable timer
+				if (cycle_through_display) {
+					display_pieces(display_type[display_index], sorted_items_array[display_index]);
+					
+					if (display_index == 3) {
+						display_index = 0;
+						} else {
+						display_index++;
+					}
+				} else {
+					// Disable timer
 				TIMSK3 &= 0xFD;
+				}
+				
+				
 			}
 			
 			// If no items in any queue, turn off system
 			if (isEmpty(entryList) &&
 				isEmpty(reflectiveList) &&
-				isEmpty(classifiedList)) {
+				isEmpty(classifiedList) &&
+				!cycle_through_display) {
 				
 				// Turn off motor
+				mTimer(100);
 				PORTB = 0;
+				
+				// Start cycling through processed items
+				cycle_through_display = 1;
+				display_index = 0;
+				start_timer3(timer3_1sec);
 				
 				// Disable ADC
 				ADCSRA &= ~_BV(ADEN);
 				
 				// Disable interrupts
-				cli();
+				//cli();
 				
 				// Release resources
 				clearQueue(entryList);
@@ -880,6 +900,8 @@ int main(void)
 				clearQueue(classifiedList);
 				clearQueue(sortedList);
 			}
+			
+			
 				
 		}	
 		
