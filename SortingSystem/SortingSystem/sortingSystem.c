@@ -395,9 +395,10 @@ void change_motor_direction() {
 }//change_motor_direction
 
 void stepper_rotate(int steps, int direction) {
-	int accel, decel = 0;
-	int max_delay = 16;
-	int min_delay = 8;
+	int accel = 0;
+	int decel = 0;
+	int max_delay = 14;
+	int min_delay = 6;
 	int delay_diff = max_delay-min_delay;
 	int delay = max_delay;
 	static int stepnum = 0;
@@ -428,21 +429,23 @@ void stepper_rotate(int steps, int direction) {
 		}//switch
 		if((i<delay_diff) && (delay >= min_delay))
 		{
-			 accel++;
-			 delay -= accel; // inc acceleration
+			// accel++;
+			// delay -= accel; // inc acceleration
+			delay--;
 		}
 		if(((steps - i) <= delay_diff) && (delay <= max_delay)) 
 		{
-			decel++;
-			delay += decel; //deceleration
+			//decel++;
+			//delay += decel; //deceleration
+			delay++;
 		}
 	}//for
 	
 } //stepperRotate
 
 void stepper_position(uint8_t new_position){
-	
-	uint8_t rotation = direction_lookup_table[motor_position][new_position];
+	/*
+	uint8_t rotation = rotation_lookup_table[motor_position][new_position];
 	if(rotation == 0)
 		return;
 		
@@ -455,7 +458,14 @@ void stepper_position(uint8_t new_position){
 		
 	motor_position = new_position;
 	prev_direction = direction;
+	*/
+	int diff = (new_position - motor_position);
 	
+	if((diff == 1) || (diff == -3)) stepper_rotate(TURN_90, CW);
+	else if((diff == -1) || (diff == 3)) stepper_rotate(TURN_90, CCW);
+	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CW);
+
+	motor_position = new_position;
 }//stepper_position
 
 
