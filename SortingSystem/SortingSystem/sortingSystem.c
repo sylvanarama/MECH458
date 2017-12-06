@@ -37,11 +37,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-<<<<<<< HEAD
-#define MOTOR_SPEED				0x30	//0XE0
-=======
 #define MOTOR_SPEED				0x50	//0x70	//0XE0
->>>>>>> PauseImplementation
 
 // Stepper
 #define STEP1 0x35
@@ -61,19 +57,16 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 // Calibration
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
-<<<<<<< HEAD
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
 
 // Station 4 2pm: white min, steel avg, black max, aluminum min	
 volatile uint16_t calibration_vals[4] = {746, 620, 779, 438};	
 
-//Queue
-=======
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
-volatile uint16_t calibration_vals[4] = {730, 760, 750, 600};	// Stn 3
+//volatile uint16_t calibration_vals[4] = {730, 760, 750, 600};	// Stn 3
+	
 //Queue
 //queue* itemList;
->>>>>>> PauseImplementation
 queue* entryList;
 queue* reflectiveList;
 queue* classifiedList;
@@ -101,10 +94,6 @@ volatile uint8_t item_number = 0;
 volatile uint8_t OS1_flag = 0;
 volatile uint8_t OS2_flag = 0;
 volatile uint8_t OS3_flag = 0;
-<<<<<<< HEAD
-//volatile uint8_t FER_flag;
-volatile uint8_t ADC_flag = 0;
-=======
 volatile uint8_t FER_flag = 0;
 volatile uint8_t ADC_flag = 0;
 volatile uint8_t pause_entered = 0;
@@ -115,7 +104,6 @@ volatile uint8_t operational_entered = 0;
 // Timer Variables
 volatile uint16_t timer3_1sec = 0x3D09;	// 15625 cycles
 volatile uint8_t timer3_flag = 0;
->>>>>>> PauseImplementation
 
 //Sorted Parts: white, steel, black, aluminum, total
 volatile uint8_t* sorted_items_array[5] = {0, 0, 0, 0, 0}; 
@@ -236,17 +224,12 @@ void init_interrupts(){
 	// INT3 (OS3) - Falling edge
 	EICRA = 0x92;
 	
-<<<<<<< HEAD
-	// Enable external interrupts for Port D
-	EIMSK |= 0x3D;
-=======
 	// INT4 (Pause Button)		-	 Falling edge
 	// INT5 (Ramp Down Button)	-	 Falling edge
-	EICRB = 0x0A; 
+	EICRB = 0x0A;	
 	
 	// Enable external interrupts for Port D & PortE5:4
 	EIMSK |= 0x3F;
->>>>>>> PauseImplementation
 }
 
 // Initialize PWM on Timer0
@@ -553,14 +536,14 @@ void entry_sensor()
 	PORTC = size(entryList);
 	PORTC |= 0x80;
 }
-/*
+
 void metal_sensor(){
 	//If this interrupt fires, then the object is metal
 	FER_flag = 0;
 	entryList->tail->metal = 1;
 	//PORTC |= 0x20;
 }
-*/
+
 void reflective_sensor(){
 	OS2_flag = 0;
 	//PORTC |= 0x40;
@@ -632,10 +615,7 @@ void exit_sensor(){
 	OS3_flag = 0;
 	// Show sensor triggered
 	//PORTC |= 0x80;
-<<<<<<< HEAD
-	// Move item to sorted queue
-	enqueue(sortedList, dequeue(classifiedList));
-=======
+
 	// Brake motor
 	PORTB = 0x00;
 	// Move item to sorted queue
@@ -652,7 +632,6 @@ void exit_sensor(){
 
 void display_pieces(uint8_t type, uint8_t amount) {
 	PORTC = (type << 4) + amount;
->>>>>>> PauseImplementation
 }
 
 //##############	Main Program	##############//
@@ -686,38 +665,12 @@ int main(void)
 	// Calibrate ADC before program starts
 
 	ADC_calibrate();
-/*
-	STATE = OPERATIONAL;
-	item_waiting = 0;
-	item_number = 0;
-	
 
-	
-	// Main Program
-	while (1)
-	{
-<<<<<<< HEAD
-		//PORTC = EIFR;
-		if(OS1_flag) entry_sensor();
-		//if(FER_flag) metal_sensor();
-		if(OS2_flag) reflective_sensor();
-		if(item_ready) classify_item();
-		if(OS3_flag) 
-		{
-			exit_sensor();
-			stepper_position((sortedList->tail->type)+1);
-		}
-			
-	}//while
-	*/
-	clearQueue(entryList);
-	clearQueue(reflectiveList);
-	clearQueue(classifiedList);
-	clearQueue(sortedList);
-	
-=======
 		// testing
 		//PORTC = STATE;
+		STATE = OPERATIONAL;
+		
+		while (1) {
 		
 		// When we trigger ramp down button stay in OPERATIONAL for time of half conveyor
 		if (ramp_down_entered) {
@@ -824,7 +777,6 @@ int main(void)
 		
 			
 	}//while
->>>>>>> PauseImplementation
 	
 	return 0;
 }//main
