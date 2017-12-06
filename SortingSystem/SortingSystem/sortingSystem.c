@@ -64,7 +64,7 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
-volatile uint16_t calibration_vals[4] = {805, 788, 100, 250};	// Stn 1
+volatile uint16_t calibration_vals[4] = {800, 785, 100, 250};	// Stn 1
 //Queue
 //queue* itemList;
 queue* entryList;
@@ -385,7 +385,41 @@ void change_motor_direction() {
 }//change_motor_direction
 
 void stepper_rotate(int steps, int direction) {
-	int max_delay = 10;
+	int max_delay = 16;
+	int min_delay = 8;
+	int delay_diff = max_delay-min_delay;
+	int delay = max_delay;
+	static int stepnum = 0;
+	int i;
+	for(i=0;i<steps;i++){
+		if(direction == CLOCKWISE)   stepnum = ((stepnum % 4) + 1);
+		if(direction == WIDDERSHINS) stepnum = ((stepnum - 1) % 4);
+		if(stepnum == 0) stepnum = 4;
+		switch(stepnum){
+			case(1):
+				PORTA = STEP1;
+				mTimer(delay);
+				break;
+			case(2):
+				PORTA = STEP2;
+				mTimer(delay);
+				break;
+			case(3):
+				PORTA = STEP3;
+				mTimer(delay);
+				break;
+			case(4):
+				PORTA = STEP4;
+				mTimer(delay);
+				break;
+			default: 
+				break;
+		}//switch
+		if((i<delay_diff) && (delay >= min_delay)) delay--; //acceleration
+		if(((steps - i) <= delay_diff) && (delay <= max_delay)) delay++; //deceleration
+	}//for
+	
+	/*int max_delay = 10;
 	int min_delay = 6;
 	int delay_diff = max_delay-min_delay;
 	int delay = max_delay;
@@ -409,6 +443,7 @@ void stepper_rotate(int steps, int direction) {
 		if(((steps - i) <= delay_diff) && (delay <= max_delay)) delay++; //deceleration
 	
 	}//for
+		PORTC = stepnum;	*/
 } //stepperRotate
 
 void stepper_position(uint8_t new_position){
@@ -641,6 +676,7 @@ void classify_item(){
 	enqueue(classifiedList, item_to_classify);
 	
 	//TESTING
+	PORTC = type;
 	//PORTC |= item_to_classify->type;
 	//PORTC = size(classifiedList);
 	//PORTC |= 0x20;
@@ -695,7 +731,7 @@ int main(void)
 
 	// Calibrate ADC before program starts
 
-	ADC_calibrate();
+	//ADC_calibrate();
 
 	entryList = initQueue();
 	reflectiveList = initQueue();
@@ -793,8 +829,7 @@ int main(void)
 			// If no items in any queue, turn off system
 			if (isEmpty(entryList) &&
 				isEmpty(reflectiveList) &&
-				isEmpty(classifiedList) /*&&
-				isEmpty(sortedList)*/) {
+				isEmpty(classifiedList)) {
 				
 				// Turn off motor
 				PORTB = 0;
@@ -818,6 +853,7 @@ int main(void)
 			
 	}//while
 	
+				
 	return 0;
 }//main
 
