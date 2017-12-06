@@ -633,7 +633,7 @@ void exit_sensor(){
 	
 	// Pop and delete the classified item
 	item* popped_item = dequeue(classifiedList);
-	delete(popped_item);
+	deleteItem(popped_item);
 	
 	// testing
 	PORTC = size(classifiedList);
