@@ -50,8 +50,6 @@
 #define STEP2 0x36
 #define STEP3 0x2E
 #define STEP4 0x2D
-#define CLOCKWISE 1
-#define WIDDERSHINS -1
 #define TURN_90 50
 #define TURN_180 100
 
@@ -82,6 +80,16 @@ volatile int motor_position;
 volatile int stepper_on;
 uint8_t step_CW[] = {STEP1, STEP2, STEP3, STEP4};
 uint8_t step_CCW[] = {STEP4, STEP3, STEP2, STEP1};
+uint8_t rotation_lookup_table[4][4] = {{	    0, TURN_90,	TURN_180,	TURN_90}, 
+									   {  TURN_90,	     0,  TURN_90,   TURN_180},
+									   { TURN_180, TURN_90,        0,    TURN_90},
+									   { TURN_90, TURN_180,  TURN_90,          0}};
+										   
+uint8_t direction_lookup_table[4][4] = {{	0, CW,	0,	CCW},
+                                       {  CCW,	0,  CW,   0},
+                                       {    0, CCW,   0,  CW},
+                                       {   CW,   0, CCW,   0}};
+									
 	
 // Motor variables
 uint8_t motor_direction = CW;
@@ -387,77 +395,67 @@ void change_motor_direction() {
 }//change_motor_direction
 
 void stepper_rotate(int steps, int direction) {
+	int accel, decel = 0;
 	int max_delay = 16;
 	int min_delay = 8;
 	int delay_diff = max_delay-min_delay;
 	int delay = max_delay;
 	static int stepnum = 0;
+	
 	int i;
 	for(i=0;i<steps;i++){
-		if(direction == CLOCKWISE)   stepnum = ((stepnum % 4) + 1);
-		if(direction == WIDDERSHINS) stepnum = ((stepnum - 1) % 4);
-		if(stepnum == 0) stepnum = 4;
+		if(direction == CW)   stepnum = ((stepnum + 1) % 4);
+		if(direction == CCW) stepnum = ((stepnum - 1) % 4);
 		switch(stepnum){
-			case(1):
+			case(0):
 				PORTA = STEP1;
 				mTimer(delay);
 				break;
-			case(2):
+			case(1):
 				PORTA = STEP2;
 				mTimer(delay);
 				break;
-			case(3):
+			case(2):
 				PORTA = STEP3;
 				mTimer(delay);
 				break;
-			case(4):
+			case(3):
 				PORTA = STEP4;
 				mTimer(delay);
 				break;
 			default: 
 				break;
 		}//switch
-		if((i<delay_diff) && (delay >= min_delay)) delay--; //acceleration
-		if(((steps - i) <= delay_diff) && (delay <= max_delay)) delay++; //deceleration
+		if((i<delay_diff) && (delay >= min_delay))
+		{
+			 accel++;
+			 delay -= accel; // inc acceleration
+		}
+		if(((steps - i) <= delay_diff) && (delay <= max_delay)) 
+		{
+			decel++;
+			delay += decel; //deceleration
+		}
 	}//for
 	
-	/*int max_delay = 10;
-	int min_delay = 6;
-	int delay_diff = max_delay-min_delay;
-	int delay = max_delay;
-	static int stepnum = 0;
-	int i = 0;
-	for(i=0; i<steps; i++)
-	{
-		if(direction == CLOCKWISE)
-		{
-			PORTA = step_CW[stepnum];
-			stepnum = (stepnum+1) % 4;
-		}
-		
-		if(direction == WIDDERSHINS)
-		{
-			PORTA = step_CCW[stepnum];
-			stepnum = (stepnum+1) % 4;
-		}
-		mTimer(delay);
-		if((i<delay_diff) && (delay >= min_delay)) delay--; //acceleration
-		if(((steps - i) <= delay_diff) && (delay <= max_delay)) delay++; //deceleration
-	
-	}//for
-		PORTC = stepnum;	*/
 } //stepperRotate
 
 void stepper_position(uint8_t new_position){
-	int diff = (new_position - motor_position);
 	
-	if((diff == 1) || (diff == -3)) stepper_rotate(TURN_90, CLOCKWISE);
-	else if((diff == -1) || (diff == 3)) stepper_rotate(TURN_90, WIDDERSHINS);
-	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CLOCKWISE);
+	uint8_t rotation = direction_lookup_table[motor_position][new_position];
+	if(rotation == 0)
+		return;
+		
+	static uint8_t prev_direction = CW;
+	uint8_t direction = direction_lookup_table[motor_position][new_position];
+	if(direction == 0) 
+		direction = prev_direction;
 
+	stepper_rotate(rotation, direction);
+		
 	motor_position = new_position;
-	//init_motor();
-
+	prev_direction = direction;
+	
 }//stepper_position
 
 
