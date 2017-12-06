@@ -37,7 +37,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0x30	//0x70	//0XE0
+#define MOTOR_SPEED				0x50	//0x70	//0XE0
 
 // Stepper
 #define STEP1 0x35
@@ -57,8 +57,8 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 // Calibration
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
-volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
-
+//volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
+volatile uint16_t calibration_vals[4] = {730, 760, 750, 600};	// Stn 3
 //Queue
 //queue* itemList;
 queue* entryList;
@@ -92,6 +92,7 @@ volatile uint8_t FER_flag = 0;
 volatile uint8_t ADC_flag = 0;
 volatile uint8_t pause_entered = 0;
 volatile uint8_t ramp_down_entered = 0;
+volatile uint8_t processing_for_ramp_down = 0;
 volatile uint8_t operational_entered = 0;
 
 // Timer Variables
@@ -114,9 +115,14 @@ ISR(TIMER0_COMPA_vect){
 
 ISR(TIMER3_COMPA_vect){
 	// testing
-	//PORTC = ~PORTC;
+	//PORTC |= 0x04;
 	
 	timer3_flag = 1;
+	
+	if (processing_for_ramp_down) {
+		STATE = RAMP_DOWN;
+	}
+	
 	return;
 }
 
@@ -160,11 +166,12 @@ ISR(INT4_vect) {
 // Ramp down button
 ISR(INT5_vect) {
 	ramp_down_entered = 1;
-	STATE = RAMP_DOWN;	// Can't leave this state
+	processing_for_ramp_down = 1;
+	//STATE = RAMP_DOWN;	// Can't leave this state
 	
 	
 	// testing
-	PORTC = STATE;
+	//PORTC = 0x01;
 }
 
 //Interrupt when ADC finished
@@ -510,6 +517,8 @@ void entry_sensor()
 	newItem->stage = 1;
 	enqueue(entryList, newItem);
 	//PORTC = entryList->tail->number;
+	PORTC = size(entryList);
+	PORTC |= 0x80;
 }
 
 void metal_sensor(){
@@ -551,6 +560,10 @@ void reflective_sensor(){
 		}
 		ADC_lowest_val = 0x3FF;
 		item_ready = 1;
+		
+		// testing
+		PORTC = size(reflectiveList);
+		PORTC |= 0x40;
 	}
 }
 
@@ -604,6 +617,8 @@ void classify_item(){
 	
 	//TESTING
 	//PORTC |= item_to_classify->type;
+	PORTC = size(classifiedList);
+	PORTC |= 0x20;
 	
 }//classify_item
 
@@ -619,6 +634,10 @@ void exit_sensor(){
 	stepper_position((sortedList->tail->type)+1);
 	// start motor again
 	init_motor();
+	
+	// testing
+	PORTC = size(sortedList);
+	PORTC |= 0x10;
 }
 
 void display_pieces(uint8_t type, uint8_t amount) {
@@ -670,6 +689,9 @@ int main(void)
 		
 		// When we trigger ramp down button stay in OPERATIONAL for time of half conveyor
 		if (ramp_down_entered) {
+			// testing
+			//PORTC |= 0x02;
+			
 			ramp_down_entered = 0;
 			
 			if (STATE == PAUSED) {
@@ -733,6 +755,8 @@ int main(void)
 		} 
 		
 		if (STATE == RAMP_DOWN) {
+			// testing
+			//PORTC |= 0x08;
 			
 			if (timer3_flag) {	
 				timer3_flag = 0;
@@ -744,8 +768,8 @@ int main(void)
 			// If no items in any queue, turn off system
 			if (isEmpty(entryList) &&
 				isEmpty(reflectiveList) &&
-				isEmpty(classifiedList) &&
-				isEmpty(sortedList)) {
+				isEmpty(classifiedList) /*&&
+				isEmpty(sortedList)*/) {
 				
 				// Turn off motor
 				PORTB = 0;
