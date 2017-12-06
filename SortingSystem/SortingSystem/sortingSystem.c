@@ -27,6 +27,12 @@
 #define PAUSED					3
 #define RAMP_DOWN				4
 
+// State transitions
+#define NONE					0
+#define PAUSE_ENTERED			1
+#define OPERATIONAL_ENTERED		2
+#define RAMP_DOWN_ENTERED		3
+
 // MASKS
 #define SENSOR_READING_MASK		0x3FF
 
@@ -37,7 +43,7 @@
 // Motor
 #define CW	0x04
 #define CCW	0x08
-#define MOTOR_SPEED				0x30	//0x70	//0XE0
+#define MOTOR_SPEED				0x50	//0x70	//0XE0
 
 // Stepper
 #define STEP1 0x35
@@ -57,18 +63,14 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 // Calibration
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
-<<<<<<< HEAD
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
 volatile uint16_t calibration_vals[4] = {730, 760, 750, 600};	// Stn 3
-=======
-volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};
->>>>>>> parent of 377d889... Ramp down works as intended, but...
-
 //Queue
+//queue* itemList;
 queue* entryList;
 queue* reflectiveList;
 queue* classifiedList;
-
+queue* sortedList;
 
 // ADC variables
 volatile uint16_t ADC_result;
@@ -86,6 +88,7 @@ uint8_t motor_direction = CW;
 
 // State and Control Variables
 volatile uint8_t STATE = CALIBRATION;
+volatile uint8_t STATE_TRANSITION = NONE;
 volatile uint8_t item_ready = 0;
 volatile uint8_t item_waiting = 0;
 volatile uint8_t item_number = 0;
@@ -94,9 +97,10 @@ volatile uint8_t OS2_flag = 0;
 volatile uint8_t OS3_flag = 0;
 volatile uint8_t FER_flag = 0;
 volatile uint8_t ADC_flag = 0;
-volatile uint8_t pause_entered = 0;
-volatile uint8_t ramp_down_entered = 0;
-volatile uint8_t operational_entered = 0;
+//volatile uint8_t pause_entered = 0;
+//volatile uint8_t ramp_down_entered = 0;
+volatile uint8_t processing_for_ramp_down = 0;
+//volatile uint8_t operational_entered = 0;
 
 // Timer Variables
 volatile uint16_t timer3_1sec = 0x3D09;	// 15625 cycles
@@ -118,9 +122,14 @@ ISR(TIMER0_COMPA_vect){
 
 ISR(TIMER3_COMPA_vect){
 	// testing
-	//PORTC = ~PORTC;
+	//PORTC |= 0x04;
 	
 	timer3_flag = 1;
+	
+	if (processing_for_ramp_down) {
+		STATE = RAMP_DOWN;
+	}
+	
 	return;
 }
 
@@ -148,27 +157,36 @@ ISR(INT3_vect){
 
 // Pause button
 ISR(INT4_vect) {
+	//PORTC &= 0x3F;
+	//PORTC = STATE_TRANSITION;
+	
 	if (STATE == OPERATIONAL) {
-		pause_entered = 1;
+		STATE_TRANSITION = PAUSE_ENTERED;
+		//pause_entered = 1;
 		STATE = PAUSED;
 	} else if (STATE == PAUSED) {
-		operational_entered = 1;
+		STATE_TRANSITION = OPERATIONAL_ENTERED;
+		//operational_entered = 1;
 		STATE = OPERATIONAL;
 		display_index = 0;
 	}
 	
 	// testing
 	//PORTC = STATE;
+	PORTC = STATE_TRANSITION;
+	PORTC |= STATE << 6;
 }
 
 // Ramp down button
 ISR(INT5_vect) {
-	ramp_down_entered = 1;
-	STATE = RAMP_DOWN;	// Can't leave this state
+	STATE_TRANSITION = RAMP_DOWN_ENTERED;
+	//ramp_down_entered = 1;
+	processing_for_ramp_down = 1;
+	//STATE = RAMP_DOWN;	// Can't leave this state
 	
 	
 	// testing
-	PORTC = STATE;
+	//PORTC = 0x01;
 }
 
 //Interrupt when ADC finished
@@ -391,6 +409,7 @@ void stepper_position(uint8_t new_position){
 	else if((diff == 2) || (diff == -2)) stepper_rotate(TURN_180, CLOCKWISE);
 
 	motor_position = new_position;
+	//init_motor();
 
 }//stepper_position
 
@@ -513,6 +532,8 @@ void entry_sensor()
 	newItem->stage = 1;
 	enqueue(entryList, newItem);
 	//PORTC = entryList->tail->number;
+	PORTC = size(entryList);
+	PORTC |= 0x80;
 }
 
 void metal_sensor(){
@@ -554,6 +575,10 @@ void reflective_sensor(){
 		}
 		ADC_lowest_val = 0x3FF;
 		item_ready = 1;
+		
+		// testing
+		PORTC = size(reflectiveList);
+		PORTC |= 0x40;
 	}
 }
 
@@ -607,6 +632,8 @@ void classify_item(){
 	
 	//TESTING
 	//PORTC |= item_to_classify->type;
+	PORTC = size(classifiedList);
+	PORTC |= 0x20;
 	
 }//classify_item
 
@@ -614,22 +641,18 @@ void exit_sensor(){
 	OS3_flag = 0;
 	// Show sensor triggered
 	//PORTC |= 0x80;
-	
-	// Brake motor, move stepper, start motor
+	// Brake motor
 	PORTB = 0x00;
-	stepper_position((classifiedList->head->type)+1);
+	// Move item to sorted queue
+	enqueue(sortedList, dequeue(classifiedList));
+	//move stepper to correct position
+	stepper_position((sortedList->tail->type)+1);
+	// start motor again
 	init_motor();
-<<<<<<< HEAD
-	
-	// Pop and delete the classified item
-	item* popped_item = dequeue(classifiedList);
-	delete(popped_item);
 	
 	// testing
-	PORTC = size(classifiedList);
+	PORTC = size(sortedList);
 	PORTC |= 0x10;
-=======
->>>>>>> parent of 377d889... Ramp down works as intended, but...
 }
 
 void display_pieces(uint8_t type, uint8_t amount) {
@@ -667,6 +690,7 @@ int main(void)
 	entryList = initQueue();
 	reflectiveList = initQueue();
 	classifiedList = initQueue();
+	sortedList = initQueue();
 
 	STATE = OPERATIONAL;
 	item_waiting = 0;
@@ -675,12 +699,14 @@ int main(void)
 	// Main Program
 	while (1)
 	{
-		// testing
-		//PORTC = STATE;
-		
+				
 		// When we trigger ramp down button stay in OPERATIONAL for time of half conveyor
-		if (ramp_down_entered) {
-			ramp_down_entered = 0;
+		if (STATE_TRANSITION == RAMP_DOWN_ENTERED) {
+			// testing
+			//PORTC |= 0x02;
+			
+			STATE_TRANSITION = NONE;
+			//ramp_down_entered = 0;
 			
 			if (STATE == PAUSED) {
 				STATE = OPERATIONAL;
@@ -692,7 +718,7 @@ int main(void)
 		if (STATE == OPERATIONAL || RAMP_DOWN) {
 			
 			// Entered OPERATIONAL from PAUSED
-			if (operational_entered) {
+			if (STATE_TRANSITION == OPERATIONAL_ENTERED) {
 				// start motor
 				PORTB =  CW;
 				
@@ -710,15 +736,16 @@ int main(void)
 			if(item_ready) 
 				classify_item();
 			if(OS3_flag) 
-				exit_sensor();
+				exit_sensor();	
 			
 		}
 		
 		if (STATE == PAUSED) {
 			
 			// Check if just entering PAUSED
-			if (pause_entered) {
-				pause_entered = 0;
+			if (STATE_TRANSITION == PAUSE_ENTERED) {
+				//pause_entered = 0;
+				STATE_TRANSITION = NONE;
 				
 				// turn off motor
 				PORTB =  0;
@@ -743,6 +770,8 @@ int main(void)
 		} 
 		
 		if (STATE == RAMP_DOWN) {
+			// testing
+			//PORTC |= 0x08;
 			
 			if (timer3_flag) {	
 				timer3_flag = 0;
@@ -754,12 +783,8 @@ int main(void)
 			// If no items in any queue, turn off system
 			if (isEmpty(entryList) &&
 				isEmpty(reflectiveList) &&
-<<<<<<< HEAD
-				isEmpty(classifiedList)) {
-=======
-				isEmpty(classifiedList) &&
-				isEmpty(sortedList)) {
->>>>>>> parent of 377d889... Ramp down works as intended, but...
+				isEmpty(classifiedList) /*&&
+				isEmpty(sortedList)*/) {
 				
 				// Turn off motor
 				PORTB = 0;
@@ -774,6 +799,7 @@ int main(void)
 				clearQueue(entryList);
 				clearQueue(reflectiveList);
 				clearQueue(classifiedList);
+				clearQueue(sortedList);
 			}
 				
 		}	
@@ -784,7 +810,4 @@ int main(void)
 	
 	return 0;
 }//main
-
-
-
 
