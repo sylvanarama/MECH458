@@ -110,7 +110,8 @@ volatile uint8_t processing_for_ramp_down = 0;
 //volatile uint8_t operational_entered = 0;
 
 // Timer Variables
-volatile uint16_t timer3_1sec = 0x3D09;	// 15625 cycles
+//volatile uint16_t timer3_1sec = 0x3D09;	// 15625 cycles
+volatile uint16_t timer3_1sec = 0x6ACF;	// 27300 cycles ~1.75 sec
 volatile uint8_t timer3_flag = 0;
 
 //Sorted Parts: white, steel, black, aluminum, total
@@ -131,7 +132,7 @@ ISR(TIMER0_COMPA_vect){
 
 ISR(TIMER3_COMPA_vect){
 	// testing
-	PORTC |= 0x04;
+	//PORTC |= 0x04;
 	
 	timer3_flag = 1;
 	
@@ -199,7 +200,7 @@ ISR(INT5_vect) {
 	
 	
 	// testing
-	PORTC = 0x01;
+	//PORTC = 0x01;
 }
 
 //Interrupt when ADC finished
@@ -520,7 +521,7 @@ void ADC_calibrate(){
 		//update_motor_speed(0);
 		PORTB = 0x00;
 		
-		mTimer(100);
+		mTimer(150);
 		// calculate the minimum, maximum, median, and mean of the 10 values
 		min = cal_vals[0];
 		max = cal_vals[0];
@@ -642,6 +643,7 @@ void reflective_sensor(){
 
 void classify_item(){
 	item_ready = 0;
+
 	item* item_to_classify = dequeue(reflectiveList);
 	uint16_t r = item_to_classify->reflective;
 	uint8_t m = item_to_classify->metal;
@@ -703,16 +705,19 @@ void exit_sensor(){
 	// Brake motor
 	PORTB = 0x00;
 	// Move item to sorted queue
-	enqueue(sortedList, dequeue(classifiedList));
-	//move stepper to correct position
-	stepper_position((sortedList->tail->type)+1);
-	// start motor again
-	init_motor();
-	sorted_items_array[sortedList->tail->type]++;
-	sorted_items_array[TOTAL]++;
-	// testing
-	//PORTC = size(sortedList);
-	//PORTC |= 0x10;
+	if(size(classifiedList) != 0) 
+	{
+		enqueue(sortedList, dequeue(classifiedList));
+		//move stepper to correct position
+		stepper_position((sortedList->tail->type)+1);
+		// start motor again
+		init_motor();
+		sorted_items_array[sortedList->tail->type]++;
+		sorted_items_array[TOTAL]++;
+		// testing
+		//PORTC = size(sortedList);
+		//PORTC |= 0x10;
+	}
 }
 
 void display_pieces(uint8_t type, uint8_t amount) {
@@ -773,7 +778,7 @@ int main(void)
 		// When we trigger ramp down button stay in OPERATIONAL for time of half conveyor
 		if (STATE_TRANSITION == RAMP_DOWN_ENTERED) {
 			// testing
-			PORTC |= 0x02;
+			//PORTC |= 0x02;
 			
 			STATE_TRANSITION = NONE;
 			//ramp_down_entered = 0;
@@ -854,7 +859,7 @@ int main(void)
 		
 		if (STATE == RAMP_DOWN) {
 			// testing
-			PORTC |= 0x08;
+			//PORTC |= 0x08;
 			
 			if (timer3_flag) {	
 				timer3_flag = 0;
