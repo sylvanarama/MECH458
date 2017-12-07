@@ -62,7 +62,7 @@ enum item_types {WHITE, STEEL, BLACK, ALUMINUM, TOTAL}; // to align with stepper
 volatile uint16_t cal_vals_final[4][4];
 //volatile uint16_t calibration_vals[4] = {897, 931, 199, 651};
 //volatile uint16_t calibration_vals[4] = {720, 750, 380, 610};		// Stn 4
-volatile uint16_t calibration_vals[4] = {770, 100, 817, 20};	// Stn 1
+volatile uint16_t calibration_vals[4] = {809, 170, 868, 20};	// Stn 1
 //Queue
 //queue* itemList;
 queue* entryList;
@@ -311,7 +311,7 @@ void init_ADC(){
 	item_ready = 0;
 	
 	// Voltage selection
-	ADMUX |= _BV(REFS0);
+	ADMUX |= _BV(REFS0) | _BV(MUX0);
 	
 	// Channel 0 gives consistent results with what's expected
 	// Black has a high reflectivity and aluminum has the lowest.
@@ -658,12 +658,12 @@ void classify_item(){
 		if(diff_white < diff_black) 
 		{
 			type = WHITE;
-			sorted_items_array[WHITE]++;
+			//sorted_items_array[WHITE]++;
 		}
 		else 
 		{
 			type = BLACK;
-			sorted_items_array[BLACK]++;
+			//sorted_items_array[BLACK]++;
 		}
 	}
 	
@@ -674,18 +674,18 @@ void classify_item(){
 		if(diff_aluminum < diff_steel) 
 		{
 			type = ALUMINUM;
-			sorted_items_array[ALUMINUM]++;
+			//sorted_items_array[ALUMINUM]++;
 		}
 		else 
 		{
 			type = STEEL;
-			sorted_items_array[STEEL]++;
+			//sorted_items_array[STEEL]++;
 		}
 	}
 	item_to_classify->type = type;
 	item_to_classify->stage = 3;
 	
-	sorted_items_array[TOTAL]++;
+	//sorted_items_array[TOTAL]++;
 	enqueue(classifiedList, item_to_classify);
 	
 	//TESTING
@@ -708,7 +708,8 @@ void exit_sensor(){
 	stepper_position((sortedList->tail->type)+1);
 	// start motor again
 	init_motor();
-	
+	sorted_items_array[sortedList->tail->type]++;
+	sorted_items_array[TOTAL]++;
 	// testing
 	//PORTC = size(sortedList);
 	//PORTC |= 0x10;
@@ -839,7 +840,7 @@ int main(void)
 				
 				if (display_index == 4) {
 					// Get number of items still on conveyor belt
-					int remaining_items = size(classifiedList); // gets size of all queues cuz they're linked!!
+					int remaining_items = size(entryList) + size(reflectiveList) + size(classifiedList); // gets size of all queues cuz they're linked!!
 					// + size(reflectiveList) + size(classifiedList);
 					
 					display_pieces(0xff, remaining_items);

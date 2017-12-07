@@ -57,7 +57,7 @@ item* dequeue(queue* q){
 	}/*if*/
 	if(q->head == NULL) q->tail = NULL; // if that was the last element in the queue, set tail to NULL as well
 	
-	//deQueuedItem->next = NULL;
+	deQueuedItem->next = NULL;
 	
 	return deQueuedItem;
 }/*dequeue*/
